@@ -660,6 +660,10 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
                         <input name="applicant[phone]" type="tel" maxlength="24" autocomplete="tel" value="<?= h($form['phone']) ?>">
                     </label>
                 </div>
+                <div class="lookup-box">
+                    <button class="button button-secondary" type="button" data-lookup-button>Wyszukaj moje starty</button>
+                    <p class="privacy-note" data-lookup-status role="status" aria-live="polite">Wpisz nazwisko i numer licencji, a uzupełnimy dyscypliny i starty znalezione w wynikach zawodów.</p>
+                </div>
             </section>
 
             <section class="form-card">
