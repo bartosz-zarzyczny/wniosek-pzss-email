@@ -256,6 +256,26 @@ $calendarLabels = ['PZSS' => 'PZSS', 'WZSS' => 'WZSS', 'MZSS' => 'MZSS', 'other'
 $selectedDisciplines = [];
 $isPost = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST';
 
+$captchaQuestions = [
+    ['Broń krótka w dynamice o kalibrze 9x19', 'pistolet'],
+    ['Lubi dalszy dystans', 'karabin'],
+    ['Wystrzeli dużo małych kulek', 'strzelba'],
+    ['Ile nabojów mieści się w pełnym magazynku 5-strzałowego rewolweru? Podaj cyfrę', '5'],
+    ['Strzał obok celu to…', 'miss'],
+    ['Chronią uszy na strzelnicy', 'suchawki'],
+    ['Chronią oczy na strzelnicy', 'okulary'],
+    ['Papierowy cel, do którego się strzela', 'tarcza'],
+];
+
+function normalizeCaptcha(string $value): string
+{
+    $value = strtr(mb_strtolower(trim($value), 'UTF-8'), [
+        'ą' => 'a', 'ć' => 'c', 'ę' => 'e', 'ł' => 'l', 'ń' => 'n',
+        'ó' => 'o', 'ś' => 's', 'ź' => 'z', 'ż' => 'z',
+    ]);
+    return $value;
+}
+
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -419,6 +439,15 @@ if ($isPost) {
     if ($validCompetitions === []) {
         $errors[] = 'Dodaj co najmniej jeden start w zawodach.';
     }
+    if ($action === 'send') {
+        $captchaAnswer = isset($_POST['captcha']) && is_string($_POST['captcha']) ? $_POST['captcha'] : '';
+        $captchaIndex = $_SESSION['captcha_index'] ?? null;
+        unset($_SESSION['captcha_index']);
+        if (!is_int($captchaIndex) || !isset($captchaQuestions[$captchaIndex]) ||
+            normalizeCaptcha($captchaAnswer) !== $captchaQuestions[$captchaIndex][1]) {
+            $errors[] = 'Nieprawidłowa odpowiedź na pytanie zabezpieczające.';
+        }
+    }
 
     if (empty($_POST['website']) && $errors === [] && $applicationDate !== null) {
         try {
@@ -509,7 +538,10 @@ if ($isPost) {
                 'Reply-To: ' . $from,
             ];
             $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-            $sent = mail(implode(', ', $recipients), $encodedSubject, $mimeBody, implode("\r\n", $headers));
+            $sent = true;
+            foreach ($recipients as $recipient) {
+                $sent = mail($recipient, $encodedSubject, $mimeBody, implode("\r\n", $headers)) && $sent;
+            }
             if (!$sent) {
                 unlink($temporaryPdf);
                 error_log('Nie udało się wysłać wniosku licencyjnego przez PHP mail().');
@@ -540,6 +572,9 @@ if (isset($_GET['sent']) && !$success) {
     unset($_SESSION['download_path'], $_SESSION['download_token'], $_SESSION['download_expires'], $_SESSION['download_year']);
 }
 $csrfToken = (string) $_SESSION['csrf_token'];
+$captchaIndex = random_int(0, count($captchaQuestions) - 1);
+$_SESSION['captcha_index'] = $captchaIndex;
+$captchaQuestion = $captchaQuestions[$captchaIndex][0];
 ?>
 <!doctype html>
 <html lang="pl">
@@ -731,6 +766,10 @@ $csrfToken = (string) $_SESSION['csrf_token'];
                 </div>
                 <p class="privacy-note">Dane są używane wyłącznie do przygotowania wniosku i wysłania wiadomości. Formularz nie zapisuje ich w bazie; tymczasowy PDF jest usuwany po pobraniu, a wygasłe pliki są sprzątane przy kolejnych wejściach na stronę.</p>
             </section>
+
+            <label class="field captcha-field"><span>Pytanie zabezpieczające (wymagane do wysyłki e-mail): <?= h($captchaQuestion) ?> <b>*</b></span>
+                <input name="captcha" maxlength="30" autocomplete="off" autocapitalize="none" placeholder="Wpisz jedno słowo (wielkość liter bez znaczenia)">
+            </label>
 
             <div class="submit-row">
                 <p>Pola oznaczone <b>*</b> są wymagane. Możesz pobrać PDF bez wysyłania e-maila.</p>
