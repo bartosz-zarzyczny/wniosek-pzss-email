@@ -57,4 +57,103 @@
     form.addEventListener('input', updateForm);
     form.addEventListener('change', updateForm);
     updateForm();
+
+    const lookupButton = form.querySelector('[data-lookup-button]');
+    const lookupStatus = form.querySelector('[data-lookup-status]');
+    const field = (name) => form.querySelector('[name="' + name + '"]');
+
+    const rowName = (row) => row.querySelector('input[name$="[name]"]');
+    const rowDate = (row) => row.querySelector('input[name$="[date]"]');
+
+    const fillRow = (row, start) => {
+        rowName(row).value = start.name;
+        rowDate(row).value = start.date;
+        row.querySelector('input[name$="[location]"]').value = start.location;
+        const category = row.querySelector('.row-options .category-options input[value="' + start.category + '"]');
+        if (category) {
+            category.checked = true;
+        }
+        const calendar = row.querySelector('[data-calendar-options] input[value="' + start.calendar + '"]');
+        if (calendar) {
+            calendar.checked = true;
+        }
+        row.querySelector('[data-mzss-toggle]').checked = start.calendar === 'MZSS';
+    };
+
+    const alreadyListed = (start) => rows.some((row) => {
+        const checked = row.querySelector('.row-options .category-options input:checked');
+        return !row.disabled && rowName(row).value.trim() === start.name &&
+            rowDate(row).value === start.date && checked && checked.value === start.category;
+    });
+
+    const applyStarts = (starts) => {
+        const found = new Set(starts.map((start) => start.category));
+        disciplineInputs.forEach((input) => {
+            if (found.has(input.value)) {
+                input.checked = true;
+            }
+        });
+        updateForm();
+
+        let inserted = 0;
+        let skipped = 0;
+        let needsUrl = false;
+        starts.forEach((start) => {
+            if (alreadyListed(start)) {
+                return;
+            }
+            const row = rows.find((candidate) => !candidate.hidden && !candidate.disabled &&
+                rowName(candidate).value.trim() === '');
+            if (!row) {
+                skipped += 1;
+                return;
+            }
+            fillRow(row, start);
+            needsUrl = needsUrl || start.calendar !== 'MZSS';
+            inserted += 1;
+        });
+        updateForm();
+
+        let message = 'Znaleziono startów: ' + starts.length + ', dodano: ' + inserted + '.';
+        if (skipped > 0) {
+            message += ' Pozostałe (' + skipped + ') nie zmieściły się w dostępnych miejscach.';
+        }
+        if (needsUrl) {
+            message += ' Dla zawodów spoza kalendarza MZSS uzupełnij link do strony zawodów.';
+        }
+        return message + ' Sprawdź poprawność danych przed wysłaniem.';
+    };
+
+    if (lookupButton && lookupStatus) {
+        lookupButton.addEventListener('click', async () => {
+            const lastName = field('applicant[last_name]').value.trim();
+            const license = field('applicant[license]').value.trim();
+            if (lastName === '' || license === '') {
+                lookupStatus.textContent = 'Podaj nazwisko i numer licencji, aby wyszukać starty.';
+                return;
+            }
+
+            const body = new FormData();
+            body.set('csrf_token', field('csrf_token').value);
+            body.set('last_name', lastName);
+            body.set('license', license);
+            lookupButton.disabled = true;
+            lookupStatus.textContent = 'Szukam startów…';
+            try {
+                const response = await fetch('lookup.php', { method: 'POST', body, credentials: 'same-origin' });
+                const data = await response.json();
+                if (!data.ok) {
+                    lookupStatus.textContent = data.error;
+                } else if (data.starts.length === 0) {
+                    lookupStatus.textContent = 'Nie znaleziono startów dla podanych danych. Wpisz je ręcznie.';
+                } else {
+                    lookupStatus.textContent = applyStarts(data.starts);
+                }
+            } catch (error) {
+                lookupStatus.textContent = 'Nie udało się wyszukać startów. Wpisz je ręcznie.';
+            } finally {
+                lookupButton.disabled = false;
+            }
+        });
+    }
 })();

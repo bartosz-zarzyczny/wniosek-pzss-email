@@ -1,8 +1,21 @@
 Options -Indexes
 
+<Files "local.php">
+    Require all denied
+</Files>
+
 <Files "settings.json">
     Require all denied
 </Files>
+
+<FilesMatch "\.(sql|py)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(database|tools|download_pdf|lib|tests)(/|$) - [R=404,L]
+</IfModule>
 
 <Files "wniosek-o-przedluzenie-licencji-zawodniczej.pdf">
     Require all denied

@@ -1,1 +1,4 @@
 settings.json
+/database/data.sql
+local.php
+/download_pdf

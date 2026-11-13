@@ -408,6 +408,19 @@ h1 em {
     font-size: 12px;
 }
 
+.lookup-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.lookup-box .privacy-note {
+    margin: 0;
+    flex: 1 1 260px;
+}
+
 .submit-row {
     display: flex;
     align-items: center;
@@ -640,3 +653,18 @@ h1 em {
         padding: 32px 20px;
     }
 }
+
+.admin-shell { display: grid; gap: 1.5rem; }
+.admin-card { background: #fff; border: 1px solid #e3dfd9; border-radius: 12px; padding: 1.5rem; }
+.admin-card h1, .admin-card h2, .admin-card h3 { margin-top: 0; }
+.admin-form { display: grid; gap: 1rem; max-width: 26rem; }
+.admin-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
+.admin-year input { width: 6rem; }
+.admin-check { display: flex; gap: .4rem; align-items: center; font-size: .9rem; }
+.admin-logout { display: flex; gap: 1rem; align-items: center; margin: 0; }
+.admin-notice { background: #eef7ee; border: 1px solid #b9d9b9; }
+.admin-status { min-height: 1.5em; }
+.admin-progress { height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
+.admin-progress > div { height: 100%; width: 0; background: #b8392a; transition: width .2s; }
+.admin-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.admin-table th, .admin-table td { text-align: left; padding: .4rem .5rem; border-bottom: 1px solid #eee; vertical-align: top; word-break: break-word; }
