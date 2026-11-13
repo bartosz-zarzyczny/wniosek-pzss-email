@@ -6,7 +6,7 @@ Lekka strona PHP do wypełnienia załączonego wniosku na rok 2027, wygenerowani
 
 1. Skopiuj pliki projektu do katalogu strony WWW, zachowując strukturę folderów.
 2. W panelu hostingu wybierz obsługiwaną wersję PHP (zalecane PHP 8.1 lub nowsze).
-3. W `settings.json` ustaw rok, adresy odbiorców i adres nadawcy:
+3. Skopiuj `settings.json-example` jako `settings.json` i ustaw rok, adresy odbiorców i adres nadawcy:
 
    ```json
    {
@@ -17,7 +17,7 @@ Lekka strona PHP do wypełnienia załączonego wniosku na rok 2027, wygenerowani
    }
    ```
 
-   `recipients` może zawierać jeden lub kilka adresów. W projekcie są wpisane adresy testowe: `boli@op.pl` oraz `zarzyczny+p@gmail.com`. Przed uruchomieniem produkcyjnym zmień je na właściwe adresy. Ustaw `from_email` na adres w domenie obsługiwanej przez hosting i skonfiguruj dla niej SPF/DKIM zgodnie z panelem hostingu. Jeśli `from_email` pozostanie pusty, aplikacja spróbuje użyć `formularz@` plus domena bieżącej strony.
+   `recipients` może zawierać jeden lub kilka adresów; wiadomość jest wysyłana osobno do każdego z nich. Plik `settings.json` jest w `.gitignore` i nie jest częścią repozytorium — utwórz go ręcznie na każdym środowisku, kopiując wzór z `settings.json-example` (zawiera adresy przykładowe `klub@example.com` i `prezes@example.com`, które zastąp właściwymi). Ustaw `from_email` na adres w domenie obsługiwanej przez hosting i skonfiguruj dla niej SPF/DKIM zgodnie z panelem hostingu. Jeśli `from_email` pozostanie pusty, aplikacja spróbuje użyć `formularz@` plus domena bieżącej strony.
 4. Upewnij się, że PHP może korzystać z `mail()` oraz zapisywać pliki w systemowym katalogu tymczasowym. Hosting musi mieć skonfigurowaną pocztę wychodzącą; samo poprawne działanie PHP nie gwarantuje dostarczenia wiadomości.
 5. Otwórz stronę przez HTTPS i wykonaj test, kontrolując skrzynkę odbiorczą oraz folder spam. Nie wysyłaj danych testowych do rzeczywistych adresów bez zgody ich właścicieli.
 
@@ -33,7 +33,48 @@ Plik `.htaccess` blokuje bezpośredni dostęp HTTP do `settings.json`, oryginaln
 - Wiadomość ma temat `Licencja 2027 – Imię NAZWISKO`; rok można zmienić w `settings.json`.
 - PDF można pobrać bez wysyłania e-maila albo wysłać jako załącznik MIME. Po wysłaniu dostępne jest także pobranie kopii przez jednorazowy link ważny 15 minut.
 - Dane z formularza nie są zapisywane w bazie ani w plikach aplikacji. Tymczasowy PDF znajduje się poza katalogiem strony, jest usuwany po pobraniu, a wygasłe pliki są sprzątane przy kolejnych wejściach na stronę. Formularz ma ograniczenie częstotliwości wysyłek dla adresu IP.
+- Wysyłka e-mail wymaga odpowiedzi na proste pytanie zabezpieczające (captcha), np. „Broń krótka w dynamice o kalibrze 9x19” → `pistolet`. Pytanie jest losowane z listy `$captchaQuestions` w `index.php` i zmienia się przy każdym wyświetleniu oraz próbie wysyłki. Wielkość liter i polskie znaki w odpowiedzi nie mają znaczenia. Pobranie PDF nie wymaga captchy. Aby dodać pytanie, dopisz parę `['Pytanie', 'odpowiedz']`, z odpowiedzią małymi literami bez polskich znaków.
 - Podpis wnioskodawcy pozostaje pusty. Wygenerowany dokument należy podpisać, jeżeli wymaga tego procedura klubu.
+
+## Captcha — pytania i odpowiedzi
+
+Captcha obowiązuje tylko przy akcji „Przygotuj i wyślij wniosek”. Pytanie jest losowane przy każdym wyświetleniu formularza i jest jednorazowe: po próbie wysyłki (także nieudanej) losowane jest nowe. Przy porównaniu odpowiedź jest przycinana z białych znaków, zamieniana na małe litery i pozbawiana polskich znaków, więc `Suchawki`, `SŁUCHAWKI` i `suchawki` są poprawne.
+
+| Pytanie | Odpowiedź |
+|---|---|
+| Broń krótka w dynamice o kalibrze 9x19 | `pistolet` |
+| Lubi dalszy dystans | `karabin` |
+| Dużo małych kulek | `strzelba` |
+| Ile nabojów mieści się w pełnym magazynku 5-strzałowego rewolweru? | `5` |
+| Strzał obok celu to… | `pudlo` |
+| Chronią uszy na strzelnicy | `suchawki` |
+| Chronią oczy na strzelnicy | `okulary` |
+| Papierowy cel, do którego się strzela | `tarcza` |
+
+Pytania znajdują się w tablicy `$captchaQuestions` w `index.php`. Nowe pytanie dodaje się jako parę `['Pytanie', 'odpowiedz']`; odpowiedź musi być zapisana małymi literami i bez polskich znaków (np. `suchawki`). Przy zmianie listy zaktualizuj powyższą tabelę.
+
+## Zabezpieczenia
+
+- Token CSRF w sesji weryfikowany przy każdym wysłaniu formularza.
+- Ukryte pole‑pułapka (honeypot) odrzucające proste boty.
+- Captcha tekstowa przy wysyłce e-mail (patrz wyżej).
+- Ograniczenie częstotliwości wysyłek dla adresu IP (`rate_limit_seconds` w `settings.json`, wartość ograniczona do 10–3600 s, domyślnie 30); blokady są plikami `zsd-license-*.lock` w katalogu tymczasowym.
+- Wymagane zaznaczenie oświadczenia o prawdziwości danych i zgody na zapoznanie się z informacją o przetwarzaniu danych.
+- Cookie sesji z flagami `HttpOnly`, `SameSite=Lax` i `Secure` (przy HTTPS).
+- Pobranie kopii po wysyłce (`download.php`) wymaga jednorazowego tokenu powiązanego z sesją, ważnego 15 minut.
+
+## Struktura projektu
+
+| Plik | Przeznaczenie |
+|---|---|
+| `index.php` | Formularz, walidacja, captcha, generowanie PDF i wysyłka e-mail |
+| `download.php` | Jednorazowe pobranie kopii PDF po wysyłce |
+| `lib/PdfFiller.php` | Nakładanie danych na oryginalny PDF |
+| `assets/` | `app.js`, `style.css`, font Source Sans 3 i licencja OFL |
+| `settings.json` | Konfiguracja (poza repozytorium, patrz `.gitignore`) |
+| `settings.json-example` | Wzór konfiguracji z adresami przykładowymi, zapisany w repozytorium; skopiuj go jako `settings.json` |
+| `.htaccess` | Blokada dostępu HTTP do `settings.json`, oryginalnego PDF i fontu oraz listingu katalogów (tylko Apache) |
+| `tests/PdfFillerTest.php` | Test generowania PDF |
 
 ## Font
 

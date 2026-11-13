@@ -1,0 +1,9 @@
+{
+  "license_year": 2027,
+  "recipients": [
+    "klub@example.com",
+    "prezes@example.com"
+  ],
+  "from_email": "",
+  "rate_limit_seconds": 30
+}
