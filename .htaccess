@@ -1,0 +1,13 @@
+Options -Indexes
+
+<Files "settings.json">
+    Require all denied
+</Files>
+
+<Files "wniosek-o-przedluzenie-licencji-zawodniczej.pdf">
+    Require all denied
+</Files>
+
+<Files "SourceSans3-Regular.ttf">
+    Require all denied
+</Files>
