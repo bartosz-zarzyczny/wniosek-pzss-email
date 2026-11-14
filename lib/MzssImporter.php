@@ -145,7 +145,7 @@ final class MzssImporter
     /**
      * Imports one uploaded PDF using metadata entered by an administrator.
      *
-     * @param array{title:string,date:string,location:string,calendar:string,flags:list<string>} $item
+     * @param array{title:string,date:string,location:string,calendar:string,event_url:string,flags:list<string>} $item
      * @return array{status:string,message:string}
      */
     public function importManual(string $file, string $fileName, array $item): array
@@ -378,14 +378,15 @@ final class MzssImporter
         try {
             $this->removeCompetition($url);
             $this->pdo->prepare(
-                'INSERT INTO competitions (name, event_date, location, calendar, source_key)
-                 VALUES (:n, :d, :l, :c, :k)'
+                'INSERT INTO competitions (name, event_date, location, calendar, source_key, event_url)
+                 VALUES (:n, :d, :l, :c, :k, :url)'
             )->execute([
                 'n' => mb_substr((string) $item['title'], 0, 80, 'UTF-8'),
                 'd' => $date,
                 'l' => mb_substr((string) $item['location'], 0, 60, 'UTF-8'),
                 'c' => (string) ($item['calendar'] ?? 'MZSS'),
                 'k' => $url,
+                'url' => (string) ($item['event_url'] ?? ''),
             ]);
             $id = (int) $this->pdo->lastInsertId();
             $insert = $this->pdo->prepare(

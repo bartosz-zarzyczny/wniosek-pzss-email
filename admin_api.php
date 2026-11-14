@@ -119,6 +119,7 @@ try {
         $date = is_string($_POST['date'] ?? null) ? trim($_POST['date']) : '';
         $location = is_string($_POST['location'] ?? null) ? trim($_POST['location']) : '';
         $calendar = is_string($_POST['calendar'] ?? null) ? trim($_POST['calendar']) : '';
+        $eventUrl = is_string($_POST['event_url'] ?? null) ? trim($_POST['event_url']) : '';
         $dateFormatValid = preg_match('/^\d{4}-\d{2}-\d{2}$/D', $date) === 1;
         $dateValue = $dateFormatValid ? DateTimeImmutable::createFromFormat('!Y-m-d', $date) : false;
         $dateErrors = $dateFormatValid ? DateTimeImmutable::getLastErrors() : false;
@@ -136,6 +137,15 @@ try {
         }
         if (!in_array($calendar, ['PZSS', 'WZSS', 'MZSS', 'other'], true)) {
             respond(422, ['ok' => false, 'error' => 'Wybierz prawidłowy kalendarz zawodów.']);
+        }
+        if ($eventUrl !== '') {
+            $urlParts = parse_url($eventUrl);
+            if (mb_strlen($eventUrl, 'UTF-8') > 250 ||
+                filter_var($eventUrl, FILTER_VALIDATE_URL) === false ||
+                !is_array($urlParts) || !isset($urlParts['scheme'], $urlParts['host']) ||
+                !in_array(strtolower($urlParts['scheme']), ['http', 'https'], true)) {
+                respond(422, ['ok' => false, 'error' => 'Podaj prawidłowy link do strony zawodów.']);
+            }
         }
 
         $allowedDisciplines = ['pistol', 'rifle', 'shotgun'];
@@ -162,6 +172,7 @@ try {
             'date' => $date,
             'location' => $location,
             'calendar' => $calendar,
+            'event_url' => $eventUrl,
             'flags' => $disciplines,
         ]);
         respond(200, ['ok' => true] + $result);

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS competitions (
     location VARCHAR(60) NOT NULL,
     calendar ENUM('PZSS', 'WZSS', 'MZSS', 'other') NOT NULL,
     source_key VARCHAR(255) NULL,
+    event_url VARCHAR(250) NOT NULL DEFAULT '',
     PRIMARY KEY (id),
     UNIQUE KEY uq_source (source_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -51,16 +51,18 @@
             const urlInput = urlField.querySelector('input');
             const textInputs = Array.from(row.querySelectorAll('[data-required-when-active]'));
             const remarks = row.querySelector('.remarks-field input');
-            urlField.hidden = mzssToggle.checked;
-            urlInput.disabled = mzssToggle.checked;
+            const hasUrl = urlInput.value.trim() !== '';
+            urlField.hidden = mzssToggle.checked && !hasUrl;
+            urlInput.disabled = mzssToggle.checked && !hasUrl;
             const active = visible && (
                 textInputs.some((input) => !input.disabled && input.value.trim() !== '') ||
                 remarks.value.trim() !== '' || categoryInputs.some((input) => input.checked) ||
                 calendarInputs.some((input) => input.checked)
             );
             textInputs.forEach((input) => {
-                input.required = active && !input.disabled;
+                input.required = input !== urlInput && active && !input.disabled;
             });
+            urlInput.required = active && !mzssToggle.checked;
             const firstCategory = categoryInputs.find((input) => !input.disabled);
             if (firstCategory) {
                 firstCategory.required = active;
@@ -177,6 +179,7 @@
             calendar.checked = true;
         }
         row.querySelector('[data-mzss-toggle]').checked = start.calendar === 'MZSS';
+        row.querySelector('[data-url-field] input').value = start.url || '';
         row.querySelector('.remarks-field input').value = start.remarks || '';
     };
 
@@ -216,6 +219,10 @@
         starts.forEach((start) => {
             const existingRow = listedRow(start);
             if (existingRow) {
+                const urlInput = existingRow.querySelector('[data-url-field] input');
+                if (urlInput.value.trim() === '' && start.url) {
+                    urlInput.value = start.url;
+                }
                 existingRow.dataset.foundStart = '1';
                 alreadyListedTotal += 1;
                 return;
@@ -228,7 +235,7 @@
             }
             fillRow(row, start);
             row.dataset.foundStart = '1';
-            needsUrl = needsUrl || start.calendar !== 'MZSS';
+            needsUrl = needsUrl || (start.calendar !== 'MZSS' && !String(start.url || '').trim());
             inserted += 1;
         });
         updateForm();

@@ -60,7 +60,7 @@ final class StartLookup
         return true;
     }
 
-    /** @return list<array{name:string,date:string,location:string,category:string,calendar:string,remarks:string}> */
+    /** @return list<array{name:string,date:string,location:string,category:string,calendar:string,remarks:string,url:string}> */
     public static function find(PDO $pdo, string $license, string $lastName): array
     {
         if (!preg_match('/\d{3,6}/', $license, $match)) {
@@ -72,7 +72,7 @@ final class StartLookup
         }
 
         $statement = $pdo->prepare(
-            'SELECT c.name, c.event_date, c.location, c.calendar, r.discipline, r.name_key, r.competition_name
+            'SELECT c.name, c.event_date, c.location, c.calendar, c.event_url, r.discipline, r.name_key, r.competition_name
              FROM competition_results r
              JOIN competitions c ON c.id = r.competition_id
              WHERE r.license_number = :license
@@ -103,6 +103,7 @@ final class StartLookup
                 'category' => (string) $row['discipline'],
                 'calendar' => (string) $row['calendar'],
                 'remarks' => (string) $row['competition_name'],
+                'url' => (string) $row['event_url'],
             ];
         }
         return $starts;

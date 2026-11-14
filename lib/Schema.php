@@ -21,6 +21,14 @@ final class Schema
             $pdo->exec('ALTER TABLE competitions ADD COLUMN source_key VARCHAR(255) NULL, ADD UNIQUE KEY uq_source (source_key)');
         }
 
+        $hasEventUrl = $pdo->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitions' AND COLUMN_NAME = 'event_url'"
+        )->fetchColumn();
+        if ((int) $hasEventUrl === 0) {
+            $pdo->exec("ALTER TABLE competitions ADD COLUMN event_url VARCHAR(250) NOT NULL DEFAULT '' AFTER source_key");
+        }
+
         $hasCompetitionName = $pdo->query(
             "SELECT COUNT(*) FROM information_schema.COLUMNS
              WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competition_results' AND COLUMN_NAME = 'competition_name'"

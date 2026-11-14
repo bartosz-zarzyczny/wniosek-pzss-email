@@ -202,7 +202,7 @@ $csrf = (string) $_SESSION['csrf_token'];
 
         <section class="admin-card">
             <h2>Ręczny import PDF z wynikami</h2>
-            <p>Dodaj PDF, którego nie ma w kalendarzu MZSS. Podaj metadane zawodów; plik zostanie odczytany tymczasowo i nie będzie przechowywany na serwerze.</p>
+            <p>Dodaj PDF, którego nie ma w kalendarzu MZSS. Podaj metadane zawodów; plik zostanie odczytany tymczasowo i nie będzie przechowywany na serwerze. Link zostanie uzupełniony w formularzu i treści e-maila; szablon PDF nie ma osobnego pola na URL.</p>
             <form class="admin-form admin-manual-form" data-manual-import enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
                 <div class="form-grid">
@@ -223,6 +223,9 @@ $csrf = (string) $_SESSION['csrf_token'];
                             <option value="MZSS">MZSS</option>
                             <option value="other">Inny / brak</option>
                         </select>
+                    </label>
+                    <label class="field field-wide"><span>Link do strony zawodów <small>(opcjonalnie)</small></span>
+                        <input name="event_url" type="url" maxlength="250" placeholder="https://…">
                     </label>
                 </div>
                 <fieldset class="category-options">

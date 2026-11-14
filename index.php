@@ -205,7 +205,7 @@ function buildEmailBody(array $applicant, array $competitions, int $year): strin
             ($competition['calendar'] === 'other' ? 'inny lub brak' : $competition['calendar']) .
             '; zawody w MZSS: ' .
             ($competition['in_mzss'] ? 'tak' : 'nie') . ')';
-        if (!$competition['in_mzss']) {
+        if ($competition['url'] !== '') {
             $lines[] = '   Link do zawodów: ' . $competition['url'];
         }
         if ($competition['remarks'] !== '') {
@@ -420,12 +420,12 @@ if ($isPost) {
             $errors[] = 'Start ' . $rowNumber . ': wybierz kalendarz zawodów.';
         }
         $date = validateDate($competition['date'], 'Data startu ' . $rowNumber, $errors);
-        if (!$competition['in_mzss']) {
+        if (!$competition['in_mzss'] || $competition['url'] !== '') {
             $urlParts = parse_url($competition['url']);
             if (filter_var($competition['url'], FILTER_VALIDATE_URL) === false ||
                 !is_array($urlParts) || !isset($urlParts['scheme'], $urlParts['host']) ||
                 !in_array(strtolower($urlParts['scheme']), ['http', 'https'], true)) {
-                $errors[] = 'Start ' . $rowNumber . ': podaj prawidłowy adres URL do zawodów spoza kalendarza MZSS.';
+                $errors[] = 'Start ' . $rowNumber . ': podaj prawidłowy adres URL do zawodów.';
             }
         }
 
