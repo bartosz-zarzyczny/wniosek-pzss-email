@@ -15,8 +15,9 @@ CREATE TABLE IF NOT EXISTS competition_results (
     discipline ENUM('pistol', 'rifle', 'shotgun') NOT NULL,
     license_number VARCHAR(10) NOT NULL,
     name_key VARCHAR(160) NOT NULL,
+    competition_name VARCHAR(120) NOT NULL DEFAULT '',
     PRIMARY KEY (id),
-    UNIQUE KEY uq_start (competition_id, discipline, license_number),
+    UNIQUE KEY uq_start (competition_id, discipline, license_number, competition_name),
     KEY idx_license (license_number),
     CONSTRAINT fk_results_competition FOREIGN KEY (competition_id)
         REFERENCES competitions (id) ON DELETE CASCADE

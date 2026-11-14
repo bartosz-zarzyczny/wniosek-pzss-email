@@ -60,7 +60,7 @@ final class StartLookup
         return true;
     }
 
-    /** @return list<array{name:string,date:string,location:string,category:string,calendar:string}> */
+    /** @return list<array{name:string,date:string,location:string,category:string,calendar:string,remarks:string}> */
     public static function find(PDO $pdo, string $license, string $lastName): array
     {
         if (!preg_match('/\d{3,6}/', $license, $match)) {
@@ -72,11 +72,11 @@ final class StartLookup
         }
 
         $statement = $pdo->prepare(
-            'SELECT c.name, c.event_date, c.location, c.calendar, r.discipline, r.name_key
+            'SELECT c.name, c.event_date, c.location, c.calendar, r.discipline, r.name_key, r.competition_name
              FROM competition_results r
              JOIN competitions c ON c.id = r.competition_id
              WHERE r.license_number = :license
-             ORDER BY c.event_date, c.id, r.discipline'
+             ORDER BY c.event_date, c.name, c.location, r.discipline, r.competition_name'
         );
         $statement->execute(['license' => $match[0]]);
 
@@ -87,8 +87,9 @@ final class StartLookup
             if (array_diff($tokens, $nameTokens) !== []) {
                 continue;
             }
-            // Te same zawody mogą być w bazie dwa razy (import ręczny i z kalendarza MZSS).
-            $key = $row['event_date'] . '|' . $row['discipline'];
+            // Scal duplikaty importu, ale nie odrębne konkurencje tej samej dyscypliny.
+            $key = $row['event_date'] . '|' . $row['name'] . '|' . $row['location'] . '|' .
+                $row['discipline'] . '|' . $row['competition_name'];
             if (isset($seen[$key])) {
                 continue;
             }
@@ -99,6 +100,7 @@ final class StartLookup
                 'location' => (string) $row['location'],
                 'category' => (string) $row['discipline'],
                 'calendar' => (string) $row['calendar'],
+                'remarks' => (string) $row['competition_name'],
             ];
         }
         return $starts;

@@ -9,6 +9,7 @@ session_set_cookie_params([
 session_start();
 
 require_once __DIR__ . '/lib/StartLookup.php';
+require_once __DIR__ . '/lib/Schema.php';
 
 header('Content-Type: application/json; charset=UTF-8');
 header('Cache-Control: no-store, private');
@@ -39,6 +40,7 @@ if ($license === '' || $lastName === '' || strlen($license) > 30 || mb_strlen($l
 
 try {
     $pdo = StartLookup::connect();
+    Schema::ensure($pdo);
     if (!StartLookup::registerAttempt($pdo, (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'))) {
         respond(429, ['ok' => false, 'error' => 'Zbyt wiele prób wyszukiwania. Spróbuj ponownie za kilka minut.']);
     }

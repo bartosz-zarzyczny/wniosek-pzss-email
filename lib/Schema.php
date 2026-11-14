@@ -20,5 +20,30 @@ final class Schema
         if ((int) $hasColumn === 0) {
             $pdo->exec('ALTER TABLE competitions ADD COLUMN source_key VARCHAR(255) NULL, ADD UNIQUE KEY uq_source (source_key)');
         }
+
+        $hasCompetitionName = $pdo->query(
+            "SELECT COUNT(*) FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competition_results' AND COLUMN_NAME = 'competition_name'"
+        )->fetchColumn();
+        if ((int) $hasCompetitionName === 0) {
+            $pdo->exec("ALTER TABLE competition_results ADD COLUMN competition_name VARCHAR(120) NOT NULL DEFAULT '' AFTER name_key");
+        }
+
+        $startIndexColumns = $pdo->query(
+            "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',')
+             FROM information_schema.STATISTICS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competition_results' AND INDEX_NAME = 'uq_start'"
+        )->fetchColumn();
+        if ($startIndexColumns === null) {
+            $pdo->exec(
+                'ALTER TABLE competition_results
+                 ADD UNIQUE KEY uq_start (competition_id, discipline, license_number, competition_name)'
+            );
+        } elseif ($startIndexColumns !== 'competition_id,discipline,license_number,competition_name') {
+            $pdo->exec(
+                'ALTER TABLE competition_results DROP INDEX uq_start,
+                 ADD UNIQUE KEY uq_start (competition_id, discipline, license_number, competition_name)'
+            );
+        }
     }
 }

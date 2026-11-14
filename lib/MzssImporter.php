@@ -330,13 +330,20 @@ final class MzssImporter
 
         $starts = [];
         $unknown = 0;
-        foreach ($rows as [$discipline, $license, $nameKey]) {
+        foreach ($rows as $row) {
+            if (!is_array($row) || count($row) < 3) {
+                continue;
+            }
+            [$discipline, $license, $nameKey] = $row;
+            $competitionName = isset($row[3]) && is_string($row[3])
+                ? mb_substr($row[3], 0, 120, 'UTF-8')
+                : '';
             $discipline = $discipline ?? $fallback;
             if ($discipline === null) {
                 $unknown++;
                 continue;
             }
-            $starts[] = [$discipline, (string) $license, (string) $nameKey];
+            $starts[] = [$discipline, (string) $license, (string) $nameKey, $competitionName];
         }
         if ($starts === []) {
             $this->removeCompetition($url);
@@ -358,11 +365,17 @@ final class MzssImporter
             ]);
             $id = (int) $this->pdo->lastInsertId();
             $insert = $this->pdo->prepare(
-                'INSERT IGNORE INTO competition_results (competition_id, discipline, license_number, name_key)
-                 VALUES (:c, :d, :l, :n)'
+                'INSERT IGNORE INTO competition_results (competition_id, discipline, license_number, name_key, competition_name)
+                 VALUES (:c, :d, :l, :n, :cn)'
             );
-            foreach ($starts as [$discipline, $license, $nameKey]) {
-                $insert->execute(['c' => $id, 'd' => $discipline, 'l' => $license, 'n' => $nameKey]);
+            foreach ($starts as [$discipline, $license, $nameKey, $competitionName]) {
+                $insert->execute([
+                    'c' => $id,
+                    'd' => $discipline,
+                    'l' => $license,
+                    'n' => $nameKey,
+                    'cn' => $competitionName,
+                ]);
             }
             $this->pdo->commit();
         } catch (Throwable $exception) {
@@ -371,7 +384,16 @@ final class MzssImporter
         }
 
         $disciplines = implode(', ', array_unique(array_column($starts, 0)));
-        $message = sprintf('Zaimportowano %d startów (%s).', count($starts), $disciplines);
+        $namedStarts = count(array_filter($starts, static function (array $start): bool {
+            return trim($start[3]) !== '';
+        }));
+        $message = sprintf(
+            'Zaimportowano %d startów (%s); nazwy konkurencji odczytano dla %d/%d.',
+            count($starts),
+            $disciplines,
+            $namedStarts,
+            count($starts)
+        );
         if ($unknown > 0) {
             $message .= sprintf(' Pominięto %d bez rozpoznanej dyscypliny.', $unknown);
         }

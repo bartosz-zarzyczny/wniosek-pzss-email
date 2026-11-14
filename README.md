@@ -28,7 +28,7 @@ Plik `.htaccess` blokuje bezpośredni dostęp HTTP do `settings.json`, oryginaln
 
 - Dane zawodnika oraz maksymalnie osiem startów są nakładane na dostarczony, jednostronicowy PDF. Oryginał pozostaje bez zmian.
 - Numer patentu, PESEL i telefon są opcjonalne.
-- Wybierz 1–3 dyscypliny. Pierwsza daje 4 miejsca na starty, druga i trzecia po 2 kolejne (odpowiednio 4, 6 lub 8 miejsc). W każdym starcie można wybrać dokładnie jedną z wybranych dyscyplin. Po zmniejszeniu liczby dyscyplin ukryte starty nie są uwzględniane w PDF ani wiadomości.
+- Wybierz 1–3 dyscypliny. Ręcznie pierwsza daje 4 miejsca na starty, druga i trzecia po 2 kolejne (odpowiednio 4, 6 lub 8 miejsc). Wyszukiwanie może pokazać wszystkie znalezione starty, także ponad 8; PDF obsługuje maksymalnie 8 startów, więc usuń nadmiarowe pozycje przyciskiem w dowolnym wierszu. W każdym starcie można wybrać dokładnie jedną z wybranych dyscyplin.
 - Dla każdego startu wybierz jeden kalendarz: PZSS, WZSS, MZSS albo „Inny / brak”. Wybrany skrót jest wpisywany w odpowiedniej kolumnie PDF i podawany w e-mailu. Osobny znacznik MZSS służy do określenia, czy wymagany jest link do zawodów; kalendarze mogą się pokrywać. Po odznaczeniu pola MZSS formularz pokazuje wymagane pole URL, który trafia do treści wiadomości.
 - Długie nazwy zawodów w PDF są łamane na granicach słów. Pojedynczy wyraz szerszy niż kolumna jest dzielony; jeśli nazwa mimo tego nie mieści się w wierszu, formularz prosi o jej skrócenie zamiast ucinać tekst.
 - Wiadomość ma temat `Licencja 2027 – Imię NAZWISKO`; rok można zmienić w `settings.json`.
@@ -105,6 +105,8 @@ Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące
 ## Test PDF
 
 Uruchom `php tests/PdfFillerTest.php`, aby sprawdzić oznaczenia kalendarzy i łamanie nazw zawodów w generowanym PDF. Test nie wysyła wiadomości.
+
+Importer wyników zachowuje nazwę konkurencji z każdego protokołu, nawet gdy ten sam zawodnik startuje kilka razy w tej samej dyscyplinie danego dnia. Nazwa trafia do pola „Uwagi” w formularzu. Wynik importu pokazuje, dla ilu startów udało się odczytać nazwę konkurencji. Po wdrożeniu tej wersji wymuś ponowny import odpowiedniego PDF w panelu administratora, aby odświeżyć już zaimportowane wyniki; panel automatycznie uzupełni brakującą kolumnę bazy.
 
 ## Treść wiadomości
 

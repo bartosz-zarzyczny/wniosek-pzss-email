@@ -22,7 +22,7 @@ HINTS = {
     'pistol': re.compile(r'pistolet|pistol\b|\bpcc\b', re.I),
     'rifle': re.compile(r'karabin|rifle', re.I),
 }
-LAYOUT_HEADER = re.compile(r'Nazwisko\s+Imi[ęe]\s+(?:nr\s+)?licencji', re.I)
+LAYOUT_HEADER = re.compile(r'Nazwisko\s+(?:i\s+)?Imi[ęe]\s+(?:nr\s+)?licenc(?:ja|ji)', re.I)
 
 
 def normalize(value):
@@ -62,51 +62,76 @@ def discipline_of(title):
     return None
 
 
+def competition_name_of(title):
+    """Normalizuje tytuł protokołu do nazwy konkurencji pokazywanej we wniosku."""
+    title = re.sub(r'^\s*[-:–—]+\s*', '', title.strip())
+    normalized = normalize(title)
+    if 'strzelba dynamiczna' in normalized and 'standard manual' in normalized:
+        return 'Strzelba dynamiczna - Standard Manual'
+    if 'strzelba dynamiczna' in normalized and 'open' in normalized.split():
+        return 'Strzelba dynamiczna - OPEN'
+    if 'pistolet' in normalized and re.search(r'hop\s*stop', normalized):
+        return 'Pistolet .22LR "HopStop"'
+    if 'pistolet' in normalized and 'mini czarny kon' in normalized:
+        return 'Pistolet .22LR Czarny Koń'
+    return title
+
+
 def valid(license, name_key):
     return license[0] != '0' and name_key and not re.search(r'\d', name_key)
 
 
-def main(path):
-    reader = PdfReader(path)
+def extract_rows(texts, layout_texts=None):
     rows = set()
-    texts = []
-    for page in reader.pages:
-        texts.append(page.extract_text() or '')
-
     section = None
+    competition_name = ''
     for text in texts:
         for line in text.splitlines():
             header = PROTOCOL_HEADER.search(line)
             if header:
-                section = discipline_of(header.group(1))
+                title = header.group(1).strip()
+                section = discipline_of(title)
+                competition_name = competition_name_of(title) if section is not None else ''
                 continue
             if ',' in line:
                 match = PRACTISCORE_ROW.match(line)
                 if match:
-                    rows.add((section, match.group(3), normalize(match.group(1) + ' ' + match.group(2))))
+                    rows.add((section, match.group(3), normalize(match.group(1) + ' ' + match.group(2)), competition_name))
                     continue
             match = TABLE_ROW.match(line)
             if match:
-                rows.add((section, match.group(2), normalize(person_from_upper_surname(match.group(1)))))
+                rows.add((section, match.group(2), normalize(person_from_upper_surname(match.group(1))), competition_name))
 
     rows = {row for row in rows if valid(row[1], row[2])}
     classified = {row[1] for row in rows if row[0] is not None}
     rows = {row for row in rows if row[0] is not None or row[1] not in classified}
     layout_rows = set()
-    if any(LAYOUT_HEADER.search(text) for text in texts):
+    if layout_texts and any(LAYOUT_HEADER.search(text) for text in texts):
         discipline = None
-        for page in reader.pages:
-            text = page.extract_text(extraction_mode='layout') or ''
-            header = re.search(r'Protokół nr \d+:\s*([^\n]+)', text)
+        layout_competition_name = ''
+        for text in layout_texts:
+            header = PROTOCOL_HEADER.search(text)
             if header:
-                title = header.group(1).strip().lower()
-                discipline = 'rifle' if any(title.startswith(p) for p in RIFLE_PROTOCOLS) else 'pistol'
+                title = header.group(1).strip()
+                normalized_title = normalize(title)
+                discipline = 'rifle' if any(normalized_title.startswith(normalize(p)) for p in RIFLE_PROTOCOLS) else discipline_of(title)
+                layout_competition_name = competition_name_of(title) if discipline is not None else ''
             for line in text.splitlines():
                 match = LAYOUT_ROW.match(line)
                 if match:
-                    layout_rows.add((discipline, match.group(3), normalize(match.group(1) + ' ' + match.group(2))))
+                    layout_rows.add((discipline, match.group(3), normalize(match.group(1) + ' ' + match.group(2)), layout_competition_name))
         licenses_in_layout = {row[1] for row in layout_rows}
         rows = {row for row in rows if row[1] not in licenses_in_layout} | layout_rows
+    return rows
+
+
+def main(path):
+    reader = PdfReader(path)
+    texts = [page.extract_text() or '' for page in reader.pages]
+    layout_texts = None
+    if any(LAYOUT_HEADER.search(text) for text in texts):
+        layout_texts = [page.extract_text(extraction_mode='layout') or '' for page in reader.pages]
+    rows = extract_rows(texts, layout_texts)
 
     head = '\n'.join(texts[:3])
     hints = [name for name, pattern in HINTS.items() if pattern.search(head)]

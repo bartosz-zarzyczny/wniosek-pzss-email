@@ -297,6 +297,15 @@ h1 em {
     font-weight: 800;
 }
 
+.competition-row-overflow {
+    border-color: #e7ae4a;
+    background: #fffaf0;
+}
+
+.competition-row-overflow > legend {
+    color: #87530b;
+}
+
 .row-index {
     margin-right: 7px;
     color: var(--blue);
@@ -419,6 +428,15 @@ h1 em {
 .lookup-box .privacy-note {
     margin: 0;
     flex: 1 1 260px;
+}
+
+.lookup-box .privacy-note.lookup-warning {
+    color: #87530b;
+    font-weight: 600;
+}
+
+.remove-start-button {
+    margin-bottom: 12px;
 }
 
 .submit-row {

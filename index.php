@@ -331,7 +331,7 @@ if ($isPost) {
     if ($selectedDisciplines === [] || count($selectedDisciplines) > 3) {
         $errors[] = 'Wybierz od jednej do trzech dyscyplin.';
     }
-    $allowedRows = $selectedDisciplines === [] ? 0 : 4 + 2 * (count($selectedDisciplines) - 1);
+    $allowedRows = $selectedDisciplines === [] ? 0 : 8;
     $action = isset($_POST['action']) && is_string($_POST['action']) ? $_POST['action'] : '';
     if (!in_array($action, ['send', 'download'], true)) {
         $errors[] = 'Wybierz wysłanie lub pobranie wniosku.';
@@ -348,7 +348,7 @@ if ($isPost) {
                     return !is_string($value) || trim($value) !== '';
                 }
             ) !== []) {
-            $errors[] = 'Liczba startów przekracza limit dla wybranych dyscyplin.';
+            $errors[] = 'PDF zawiera maksymalnie 8 startów. Usuń nadmiarowe pozycje.';
             break;
         }
     }
@@ -583,7 +583,7 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1b1918">
     <title>Wniosek o przedłużenie licencji <?= h((string) $licenseYear) ?></title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/style.css?v=<?= (int) filemtime(__DIR__ . '/assets/style.css') ?>">
 </head>
 <body>
 <header class="site-header">
@@ -680,7 +680,7 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
                         </label>
                     <?php endforeach; ?>
                 </fieldset>
-                <p class="privacy-note">Pierwsza dyscyplina daje 4 miejsca na starty, każda następna dodaje 2. Po zmniejszeniu liczby dyscyplin ukryte starty nie zostaną wysłane ani zapisane w PDF.</p>
+                <p class="privacy-note">Ręcznie dostępne są 4 miejsca dla jednej dyscypliny i po 2 kolejne dla każdej następnej. Wyszukiwanie może ujawnić dodatkowe starty; wniosek PDF obsługuje maksymalnie 8, więc usuń nadmiarowe pozycje przed wysłaniem lub pobraniem.</p>
             </section>
 
             <section class="form-card" data-competitions-section>
@@ -688,11 +688,12 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
                     <span class="section-number">03</span>
                     <div><h2>Starty w zawodach</h2><p>Wpisz co najmniej jeden start. Dla każdych zawodów wybierz jedną z wybranych dyscyplin.</p></div>
                 </div>
-                <noscript><p>Bez JavaScript widoczne są wszystkie miejsca. Wypełnij maksymalnie 4, 6 lub 8 startów odpowiednio dla 1, 2 lub 3 dyscyplin.</p></noscript>
+                <noscript><p>Bez JavaScript widoczne są wszystkie miejsca. Wniosek PDF obsługuje maksymalnie 8 startów.</p></noscript>
                 <div class="competition-list">
                     <?php foreach ($competitions as $index => $competition): ?>
                         <fieldset class="competition-row" data-competition data-index="<?= $index ?>">
                             <legend><span class="row-index"><?= sprintf('%02d', $index + 1) ?></span> Zawody</legend>
+                            <button type="button" class="button button-secondary remove-start-button" data-remove-start disabled>Usuń nadmiarowy start</button>
                             <div class="form-grid competition-grid">
                                 <label class="field field-wide"><span>Nazwa zawodów</span>
                                     <input name="competitions[<?= $index ?>][name]" maxlength="80" data-required-when-active value="<?= h($competition['name']) ?>">
@@ -788,6 +789,6 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
 <footer class="site-footer">
     <div class="footer-inner"><span>ZSD · WNIOSEK LICENCYJNY</span><span>Dokument źródłowy: wniosek o przedłużenie licencji zawodniczej</span></div>
 </footer>
-<script src="assets/app.js" defer></script>
+<script src="assets/app.js?v=<?= (int) filemtime(__DIR__ . '/assets/app.js') ?>" defer></script>
 </body>
 </html>
