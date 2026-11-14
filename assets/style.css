@@ -676,6 +676,22 @@ h1 em {
 .admin-card { background: #fff; border: 1px solid #e3dfd9; border-radius: 12px; padding: 1.5rem; }
 .admin-card h1, .admin-card h2, .admin-card h3 { margin-top: 0; }
 .admin-form { display: grid; gap: 1rem; max-width: 26rem; }
+.admin-manual-form { max-width: none; }
+.admin-form .field select {
+    width: 100%;
+    min-height: 45px;
+    padding: 10px 12px;
+    border: 1px solid #ccd3dc;
+    border-radius: 5px;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+}
+.admin-form .field select:focus {
+    border-color: var(--navy-soft);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 49, 76, .11);
+}
 .admin-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
 .admin-year input { width: 6rem; }
 .admin-check { display: flex; gap: .4rem; align-items: center; font-size: .9rem; }

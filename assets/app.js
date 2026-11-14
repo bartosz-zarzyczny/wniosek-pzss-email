@@ -265,23 +265,13 @@
         if (lookupReport && row.dataset.foundStart === '1') {
             lookupReport.removed += 1;
         }
-        const rowIndex = rows.indexOf(row);
-        if (rowIndex < pdfRowLimit) {
-            row.querySelectorAll('input').forEach((input) => {
-                if (input.type === 'checkbox' || input.type === 'radio') {
-                    input.checked = false;
-                } else {
-                    input.value = '';
-                }
-            });
-            row.querySelector('[data-mzss-toggle]').checked = true;
-            delete row.dataset.foundStart;
-        } else {
-            rows = rows.filter((candidate) => candidate !== row);
-            row.remove();
-            rows.forEach(updateRowIndex);
-            lookupExpandedCount = Math.min(lookupExpandedCount, rows.length);
-        }
+        rows = rows.filter((candidate) => candidate !== row);
+        row.remove();
+        rows.forEach(updateRowIndex);
+        ensureRowCount(pdfRowLimit);
+        lookupExpandedCount = rows.reduce((count, candidate, index) =>
+            rowHasData(candidate) ? index + 1 : count, 0
+        );
         updateForm();
         renderLookupStatus();
     });

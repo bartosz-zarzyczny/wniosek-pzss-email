@@ -129,7 +129,7 @@ $csrf = (string) $_SESSION['csrf_token'];
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Panel administracyjny</title>
-    <link rel="stylesheet" href="assets/style.css">
+    <link rel="stylesheet" href="assets/style.css?v=<?= (int) filemtime(__DIR__ . '/assets/style.css') ?>">
 </head>
 <body>
 <header class="site-header">
@@ -201,6 +201,47 @@ $csrf = (string) $_SESSION['csrf_token'];
         </section>
 
         <section class="admin-card">
+            <h2>Ręczny import PDF z wynikami</h2>
+            <p>Dodaj PDF, którego nie ma w kalendarzu MZSS. Podaj metadane zawodów; plik zostanie odczytany tymczasowo i nie będzie przechowywany na serwerze.</p>
+            <form class="admin-form admin-manual-form" data-manual-import enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="<?= h($csrf) ?>">
+                <div class="form-grid">
+                    <label class="field field-wide"><span>Nazwa zawodów</span>
+                        <input name="title" maxlength="80" required>
+                    </label>
+                    <label class="field"><span>Data zawodów</span>
+                        <input name="date" type="date" required>
+                    </label>
+                    <label class="field"><span>Miejsce</span>
+                        <input name="location" maxlength="60" required>
+                    </label>
+                    <label class="field"><span>Kalendarz</span>
+                        <select name="calendar" required>
+                            <option value="">Wybierz kalendarz</option>
+                            <option value="PZSS">PZSS</option>
+                            <option value="WZSS">WZSS</option>
+                            <option value="MZSS">MZSS</option>
+                            <option value="other">Inny / brak</option>
+                        </select>
+                    </label>
+                </div>
+                <fieldset class="category-options">
+                    <legend>Dyscypliny domyślne <small>(opcjonalnie)</small></legend>
+                    <p class="privacy-note">Zaznacz, jeśli PDF nie określa dyscypliny w tytule protokołu.</p>
+                    <label class="check-option"><input type="checkbox" name="disciplines[]" value="pistol"><span>Pistolet</span></label>
+                    <label class="check-option"><input type="checkbox" name="disciplines[]" value="rifle"><span>Karabin</span></label>
+                    <label class="check-option"><input type="checkbox" name="disciplines[]" value="shotgun"><span>Strzelba</span></label>
+                </fieldset>
+                <label class="field"><span>Plik PDF z wynikami</span>
+                    <input type="file" name="pdf" accept="application/pdf,.pdf" required>
+                    <small>Maksymalny rozmiar: 30 MB.</small>
+                </label>
+                <button class="button button-primary" type="submit" data-manual-submit>Importuj PDF</button>
+                <p class="admin-status" data-manual-status role="status" aria-live="polite"></p>
+            </form>
+        </section>
+
+        <section class="admin-card">
             <h2>Użytkownicy panelu</h2>
             <table class="admin-table">
                 <thead><tr><th>Login</th><th>Dodano</th><th></th></tr></thead>
@@ -233,7 +274,7 @@ $csrf = (string) $_SESSION['csrf_token'];
                 <button class="button button-primary" type="submit">Dodaj</button>
             </form>
         </section>
-        <script src="assets/admin.js" defer></script>
+        <script src="assets/admin.js?v=<?= (int) filemtime(__DIR__ . '/assets/admin.js') ?>" defer></script>
     <?php endif; ?>
 </main>
 </body>

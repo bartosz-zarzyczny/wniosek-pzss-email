@@ -142,6 +142,26 @@ final class MzssImporter
         return ['status' => $result['status'], 'message' => $prefix . $result['message']];
     }
 
+    /**
+     * Imports one uploaded PDF using metadata entered by an administrator.
+     *
+     * @param array{title:string,date:string,location:string,calendar:string,flags:list<string>} $item
+     * @return array{status:string,message:string}
+     */
+    public function importManual(string $file, string $fileName, array $item): array
+    {
+        $identity = implode("\0", [
+            $item['date'],
+            $item['title'],
+            $item['location'],
+            $item['calendar'],
+            str_replace('\\', '/', $fileName),
+        ]);
+        $sourceKey = 'manual:' . hash('sha256', $identity);
+
+        return $this->import($sourceKey, $file, $item, true);
+    }
+
     /** @return array{ok:bool,message:string} */
     public function checkPython(): array
     {
@@ -298,7 +318,7 @@ final class MzssImporter
      * @param array<string,mixed> $item
      * @return array{status:string,message:string}
      */
-    private function import(string $url, string $file, array $item): array
+    private function import(string $url, string $file, array $item, bool $manual = false): array
     {
         [$code, $out, $err] = $this->runPython([__DIR__ . '/../tools/parse_pdf.py', $file]);
         $data = json_decode($out, true);
@@ -307,7 +327,9 @@ final class MzssImporter
         }
         $rows = $data['rows'];
         if ($rows === []) {
-            $this->removeCompetition($url);
+            if (!$manual) {
+                $this->removeCompetition($url);
+            }
             return ['status' => 'empty', 'message' => 'Brak numerów licencji w pliku — pominięto.'];
         }
 
@@ -346,7 +368,9 @@ final class MzssImporter
             $starts[] = [$discipline, (string) $license, (string) $nameKey, $competitionName];
         }
         if ($starts === []) {
-            $this->removeCompetition($url);
+            if (!$manual) {
+                $this->removeCompetition($url);
+            }
             return ['status' => 'unknown_discipline', 'message' => 'Nie rozpoznano dyscypliny — pominięto.'];
         }
 
@@ -360,7 +384,7 @@ final class MzssImporter
                 'n' => mb_substr((string) $item['title'], 0, 80, 'UTF-8'),
                 'd' => $date,
                 'l' => mb_substr((string) $item['location'], 0, 60, 'UTF-8'),
-                'c' => 'MZSS',
+                'c' => (string) ($item['calendar'] ?? 'MZSS'),
                 'k' => $url,
             ]);
             $id = (int) $this->pdo->lastInsertId();

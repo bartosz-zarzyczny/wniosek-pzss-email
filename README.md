@@ -28,7 +28,7 @@ Plik `.htaccess` blokuje bezpośredni dostęp HTTP do `settings.json`, oryginaln
 
 - Dane zawodnika oraz maksymalnie osiem startów są nakładane na dostarczony, jednostronicowy PDF. Oryginał pozostaje bez zmian.
 - Numer patentu, PESEL i telefon są opcjonalne.
-- Wybierz 1–3 dyscypliny. Ręcznie pierwsza daje 4 miejsca na starty, druga i trzecia po 2 kolejne (odpowiednio 4, 6 lub 8 miejsc). Wyszukiwanie może pokazać wszystkie znalezione starty, także ponad 8; PDF obsługuje maksymalnie 8 startów, więc usuń nadmiarowe pozycje przyciskiem w dowolnym wierszu. W każdym starcie można wybrać dokładnie jedną z wybranych dyscyplin.
+- Wybierz 1–3 dyscypliny. Ręcznie pierwsza daje 4 miejsca na starty, druga i trzecia po 2 kolejne (odpowiednio 4, 6 lub 8 miejsc). Wyszukiwanie może pokazać wszystkie znalezione starty, także ponad 8; PDF obsługuje maksymalnie 8 startów, więc usuń nadmiarowe pozycje przyciskiem w dowolnym wierszu. Usunięcie startu przesuwa pozostałe pozycje w górę i ponownie je numeruje. W każdym starcie można wybrać dokładnie jedną z wybranych dyscyplin.
 - Dla każdego startu wybierz jeden kalendarz: PZSS, WZSS, MZSS albo „Inny / brak”. Wybrany skrót jest wpisywany w odpowiedniej kolumnie PDF i podawany w e-mailu. Osobny znacznik MZSS służy do określenia, czy wymagany jest link do zawodów; kalendarze mogą się pokrywać. Po odznaczeniu pola MZSS formularz pokazuje wymagane pole URL, który trafia do treści wiadomości.
 - Długie nazwy zawodów w PDF są łamane na granicach słów. Pojedynczy wyraz szerszy niż kolumna jest dzielony; jeśli nazwa mimo tego nie mieści się w wierszu, formularz prosi o jej skrócenie zamiast ucinać tekst.
 - Pole „Uwagi” przyjmuje do 120 znaków (także długie nazwy konkurencji z importu); tekst jest zawijany w kolumnie PDF.
@@ -76,8 +76,9 @@ Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące
 - **Pierwsze wejście:** gdy w bazie nie ma żadnego użytkownika, panel pokazuje formularz utworzenia pierwszego konta (login + hasło min. 10 znaków). Zrób to od razu po wdrożeniu — kto pierwszy otworzy `admin.php`, zakłada konto.
 - **Użytkownicy:** po zalogowaniu można dodawać kolejnych użytkowników i usuwać innych (nie własne konto). Hasła są zapisywane jako skrót `password_hash`. Logowanie ma limit 5 nieudanych prób na 15 minut dla adresu IP, token CSRF i regenerację sesji.
 - **Pobieranie i import:** przycisk „Pobierz i zaimportuj” wczytuje kalendarz MZSS z `calendar_url` dla wybranego roku, wybiera pliki z wynikami (nazwa zawiera `_R_`/`R` jako osobny człon, „rezultat”, „result” lub „wyniki”, bez względu na wielkość liter; komunikaty `_K_` są pomijane) i zapisuje je w `download_pdf/`. Plik jest pobierany tylko wtedy, gdy go nie ma lub na serwerze jest nowsza wersja (porównanie `ETag` / `Last-Modified` / rozmiaru z zapisem w tabeli `pdf_files`; ręcznie wgrany plik o tym samym rozmiarze i nie starszy niż na serwerze jest uznawany za aktualny). Po pobraniu nowej wersji wyniki zawodów są importowane od nowa. Opcja „przetwórz ponownie” wymusza ponowny import plików lokalnych.
+- **Import ręczny:** wgraj pojedynczy PDF spoza kalendarza MZSS, podaj nazwę, datę, miejsce i kalendarz zawodów, a panel zapisze odczytane wyniki w bazie. Opcjonalnie zaznacz dyscypliny, jeśli nie da się ich rozpoznać w protokołach. Plik jest przetwarzany tymczasowo, bez zapisywania kopii na serwerze; ponowny import tego samego pliku i metadanych zastępuje wcześniejszy ręczny import.
 - **Limity hostingu:** pliki są przetwarzane po jednym na żądanie AJAX (limit 30 s), postęp widać w tabeli. Do odczytu PDF używany jest `tools/parse_pdf.py` z dołączoną biblioteką `pypdf` (`tools/vendor/`, licencja BSD) uruchamiany przez `proc_open`; hosting musi udostępniać Python ≥ 3.10 (przycisk „Sprawdź Pythona” pokazuje wersję i status). Ścieżkę zmienisz w `python_path`.
-- **Dyscyplina:** brana z treści PDF (np. protokoły Legion Tarnów), a w pozostałych przypadkach z zaznaczeń P/K/S w kalendarzu MZSS, gdy jest jednoznaczna (jedna dyscyplina lub jedna wskazana także w tekście PDF). Gdy dyscypliny nie da się ustalić (np. zawody pneumatyczne), plik jest pomijany z komunikatem. Pliki bez numerów licencji (np. wyniki IPSC z numerami startowymi) także są pomijane. Wyniki są oznaczane kalendarzem `MZSS`.
+- **Dyscyplina:** w imporcie z kalendarza brana jest z treści PDF (np. protokoły Legion Tarnów), a w pozostałych przypadkach z zaznaczeń P/K/S w kalendarzu MZSS, gdy jest jednoznaczna. W imporcie ręcznym można zaznaczyć dyscyplinę domyślną dla protokołów bez rozpoznanej dyscypliny. Nierozpoznane wiersze i pliki bez numerów licencji są pomijane z komunikatem. Kalendarz zaimportowanych ręcznie zawodów jest wybierany w formularzu importu.
 - Zawody spoza kalendarza MZSS (np. PZSS) można dodać ręcznie narzędziem `tools/import_results.py`, które generuje `database/data.sql` (usuwa i wstawia tylko rekordy bez `source_key`). Powtarzające się starty (ta sama data i dyscyplina) są w wynikach wyszukiwania scalane.
 ## Struktura projektu
 
@@ -87,8 +88,8 @@ Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące
 | `download.php` | Jednorazowe pobranie kopii PDF po wysyłce |
 | `lib/PdfFiller.php` | Nakładanie danych na oryginalny PDF |
 | `lookup.php`, `lib/StartLookup.php` | Wyszukiwanie startów zawodnika w bazie (JSON) |
-| `admin.php`, `admin_api.php`, `assets/admin.js` | Panel administracyjny: logowanie, użytkownicy, pobieranie i import PDF |
-| `lib/AdminAuth.php`, `lib/MzssImporter.php`, `lib/Schema.php` | Konta, pobieranie/import z kalendarza MZSS, tworzenie tabel |
+| `admin.php`, `admin_api.php`, `assets/admin.js` | Panel administracyjny: logowanie, użytkownicy, import PDF z kalendarza i ręczny |
+| `lib/AdminAuth.php`, `lib/MzssImporter.php`, `lib/Schema.php` | Konta, import PDF z kalendarza lub ręczny, tworzenie tabel |
 | `tools/parse_pdf.py`, `tools/vendor/` | Odczyt zawodników z PDF (Python + pypdf) |
 | `tools/import_results.py`, `database/` | Ręczny import wyników do SQL, schemat bazy |
 | `local.php`, `local.example.php` | Dane dostępowe do bazy (`local.php` poza repozytorium) |
