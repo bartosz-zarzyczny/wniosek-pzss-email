@@ -14,7 +14,8 @@
     const rowName = (row) => row.querySelector('input[name$="[name]"]');
     const rowDate = (row) => row.querySelector('input[name$="[date]"]');
     const rowHasData = (row) => Array.from(row.querySelectorAll('input')).some((input) =>
-        input.type === 'checkbox' || input.type === 'radio' ? input.checked : input.value.trim() !== ''
+        input.matches('[data-mzss-toggle]') ? false :
+            input.type === 'checkbox' || input.type === 'radio' ? input.checked : input.value.trim() !== ''
     );
     lookupExpandedCount = rows.reduce((count, row, index) =>
         rowName(row).value.trim() !== '' ? index + 1 : count, 0
@@ -264,11 +265,23 @@
         if (lookupReport && row.dataset.foundStart === '1') {
             lookupReport.removed += 1;
         }
-        rows = rows.filter((candidate) => candidate !== row);
-        row.remove();
-        ensureRowCount(pdfRowLimit);
-        rows.forEach(updateRowIndex);
-        lookupExpandedCount = Math.min(lookupExpandedCount, rows.length);
+        const rowIndex = rows.indexOf(row);
+        if (rowIndex < pdfRowLimit) {
+            row.querySelectorAll('input').forEach((input) => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    input.checked = false;
+                } else {
+                    input.value = '';
+                }
+            });
+            row.querySelector('[data-mzss-toggle]').checked = true;
+            delete row.dataset.foundStart;
+        } else {
+            rows = rows.filter((candidate) => candidate !== row);
+            row.remove();
+            rows.forEach(updateRowIndex);
+            lookupExpandedCount = Math.min(lookupExpandedCount, rows.length);
+        }
         updateForm();
         renderLookupStatus();
     });

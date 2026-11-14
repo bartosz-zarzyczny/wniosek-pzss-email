@@ -15,6 +15,7 @@ class ParsePdfTest(unittest.TestCase):
             ('4', 'Strzelba Dynamiczna OPEN', 'shotgun', 'Strzelba dynamiczna - OPEN'),
             ('9', 'Pistolet Hop Stop - 20 strzałów', 'pistol', 'Pistolet .22LR "HopStop"'),
             ('10', 'Pistolet Mini Czarny Koń', 'pistol', 'Pistolet .22LR Czarny Koń'),
+            ('11', 'Arsenal Shotgun Trophy', 'shotgun', 'STANDARD MANUAL'),
         ]
         lines = []
         for number, title, _, _ in protocols:
@@ -30,7 +31,7 @@ class ParsePdfTest(unittest.TestCase):
             {(discipline, competition_name) for discipline, _, _, competition_name in starts},
             {(discipline, name) for _, _, discipline, name in protocols},
         )
-        self.assertEqual(len(starts), 4)
+        self.assertEqual(len(starts), 5)
 
     def test_extracts_layout_rows_for_alternate_license_header_and_protocol_separator(self):
         plain_text = (

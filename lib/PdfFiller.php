@@ -109,7 +109,7 @@ final class PdfFiller
             $this->drawCompetitionName($commands, $competition['name'], $baseline, $index + 1);
             $this->drawText($commands, $competition['date_display'], 245, $baseline, 6.2, 53);
             $this->drawText($commands, $competition['location'], 301, $baseline, 6.2, 60);
-            $this->drawText($commands, $competition['remarks'], 468, $baseline, 6.2, 66);
+            $this->drawCompetitionRemarks($commands, $competition['remarks'], $baseline, $index + 1);
 
             foreach ($competition['categories'] as $category) {
                 $this->drawText($commands, 'X', $categoryPositions[$category], $baseline, 6, 9);
@@ -167,6 +167,52 @@ final class PdfFiller
         }
 
         throw new RuntimeException('Start ' . $rowNumber . ': nazwa zawodów nie mieści się w PDF. Skróć ją.');
+    }
+
+    private function drawCompetitionRemarks(array &$commands, string $remarks, float $baseline, int $rowNumber): void
+    {
+        $words = preg_split('/\s+/u', trim($remarks), -1, PREG_SPLIT_NO_EMPTY);
+        if ($words === false || $words === []) {
+            return;
+        }
+
+        for ($size = 5.2; $size >= 3.0; $size = round($size - 0.2, 1)) {
+            $lines = [];
+            $line = '';
+            foreach ($words as $word) {
+                $candidate = $line === '' ? $word : $line . ' ' . $word;
+                if ($this->measureCodePoints($this->utf8CodePoints($candidate), $size) <= 66) {
+                    $line = $candidate;
+                    continue;
+                }
+                if ($line !== '') {
+                    $lines[] = $line;
+                    $line = '';
+                }
+                foreach ($this->utf8CodePoints($word) as $point) {
+                    $character = $this->encodeCodePoints([$point]);
+                    if ($line !== '' &&
+                        $this->measureCodePoints($this->utf8CodePoints($line . $character), $size) > 66) {
+                        $lines[] = $line;
+                        $line = '';
+                    }
+                    $line .= $character;
+                }
+            }
+            if ($line !== '') {
+                $lines[] = $line;
+            }
+            if (count($lines) <= 5) {
+                $lineSpacing = 4.2;
+                $firstBaseline = $baseline + ((count($lines) - 1) * $lineSpacing / 2);
+                foreach ($lines as $lineIndex => $text) {
+                    $this->drawText($commands, $text, 468, $firstBaseline - ($lineIndex * $lineSpacing), $size, 66);
+                }
+                return;
+            }
+        }
+
+        throw new RuntimeException('Start ' . $rowNumber . ': uwagi nie mieszczą się w PDF.');
     }
 
     private function drawText(array &$commands, string $text, float $x, float $y, float $size, float $maxWidth): void

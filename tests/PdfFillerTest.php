@@ -32,6 +32,7 @@ $names = [
     'Zawody lokalne',
 ];
 $calendars = ['PZSS', 'WZSS', 'MZSS', 'other'];
+$longRemarks = str_repeat('Długa nazwa konkurencji ', 5);
 $competitions = [];
 foreach ($names as $index => $name) {
     $competitions[] = [
@@ -40,7 +41,7 @@ foreach ($names as $index => $name) {
         'location' => 'Kraków',
         'categories' => ['pistol'],
         'calendar' => $calendars[$index],
-        'remarks' => '',
+        'remarks' => $index === 0 ? $longRemarks : '',
     ];
 }
 
@@ -67,6 +68,7 @@ preg_match_all('/^BT \/ZSD [\d.]+ Tf 1 0 0 1 ([\d.]+) ([\d.]+) Tm <([0-9A-F]+)> 
 $rows = [462.72, 433.80, 405.00, 376.08];
 $nameLines = array_fill(0, 4, []);
 $calendarText = array_fill(0, 4, '');
+$remarkLines = array_fill(0, 4, []);
 foreach ($textCommands as $command) {
     $x = (float) $command[1];
     $y = (float) $command[2];
@@ -82,6 +84,9 @@ foreach ($textCommands as $command) {
         if (abs($y - $baseline) < 0.01 && $x === 424.0) {
             $calendarText[$index] = $text;
         }
+        if (abs($y - $baseline) <= 10 && $x === 468.0) {
+            $remarkLines[$index][] = $text;
+        }
     }
 }
 
@@ -91,5 +96,6 @@ expect(count($nameLines[1]) >= 2 && count($nameLines[1]) <= 3 &&
 expect(count($nameLines[2]) >= 2 && count($nameLines[2]) <= 3 &&
     implode('', $nameLines[2]) === $names[2], 'Długi wyraz powinien mieścić się w PDF bez utraty znaków.');
 expect($calendarText === ['PZSS', 'WZSS', 'MZSS', '-'], 'Nieprawidłowe oznaczenia kalendarzy w PDF.');
+expect(implode(' ', $remarkLines[0]) === trim($longRemarks), 'Długie uwagi powinny mieścić się w PDF bez utraty treści.');
 
 echo "Testy PdfFiller: OK\n";

@@ -366,7 +366,7 @@ if ($isPost) {
             'in_mzss' => isset($row['in_mzss']) && (string) $row['in_mzss'] === '1',
             'calendar' => isset($row['calendar']) && is_string($row['calendar']) ? $row['calendar'] : '',
             'url' => cleanText($row['url'] ?? '', 250, 'Adres URL w starcie ' . ($index + 1), $errors),
-            'remarks' => cleanText($row['remarks'] ?? '', 60, 'Uwagi w starcie ' . ($index + 1), $errors),
+            'remarks' => cleanText($row['remarks'] ?? '', 120, 'Uwagi w starcie ' . ($index + 1), $errors),
         ];
     }
 
@@ -739,7 +739,7 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
                                 </label>
                             </div>
                             <label class="field remarks-field"><span>Uwagi <small>(opcjonalnie)</small></span>
-                                <input name="competitions[<?= $index ?>][remarks]" maxlength="60" value="<?= h($competition['remarks']) ?>">
+                                <input name="competitions[<?= $index ?>][remarks]" maxlength="120" value="<?= h($competition['remarks']) ?>">
                             </label>
                         </fieldset>
                     <?php endforeach; ?>

@@ -503,7 +503,7 @@ h1 em {
 
 .button:disabled {
     opacity: .7;
-    cursor: wait;
+    cursor: not-allowed;
 }
 
 .alert {

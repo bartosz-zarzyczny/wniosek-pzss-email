@@ -83,10 +83,12 @@ final class StartLookup
         $starts = [];
         $seen = [];
         foreach ($statement->fetchAll() as $row) {
-            $nameTokens = explode(' ', (string) $row['name_key']);
-            if (array_diff($tokens, $nameTokens) !== []) {
+            $nameTokens = array_filter(explode(' ', trim((string) $row['name_key'])), 'strlen');
+            if ($nameTokens === [] ||
+                (array_diff($tokens, $nameTokens) !== [] && count($nameTokens) > 1)) {
                 continue;
             }
+            // Some result PDFs omit the surname; the exact license number was already matched in SQL.
             // Scal duplikaty importu, ale nie odrębne konkurencje tej samej dyscypliny.
             $key = $row['event_date'] . '|' . $row['name'] . '|' . $row['location'] . '|' .
                 $row['discipline'] . '|' . $row['competition_name'];

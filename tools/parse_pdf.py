@@ -66,6 +66,8 @@ def competition_name_of(title):
     """Normalizuje tytuł protokołu do nazwy konkurencji pokazywanej we wniosku."""
     title = re.sub(r'^\s*[-:–—]+\s*', '', title.strip())
     normalized = normalize(title)
+    if 'arsenal shotgun trophy' in normalized:
+        return 'STANDARD MANUAL'
     if 'strzelba dynamiczna' in normalized and 'standard manual' in normalized:
         return 'Strzelba dynamiczna - Standard Manual'
     if 'strzelba dynamiczna' in normalized and 'open' in normalized.split():
