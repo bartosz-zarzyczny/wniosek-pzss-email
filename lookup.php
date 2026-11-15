@@ -32,10 +32,12 @@ if (!is_string($token) || empty($_SESSION['csrf_token']) || !hash_equals((string
 }
 
 $license = is_string($_POST['license'] ?? null) ? trim($_POST['license']) : '';
+$firstName = is_string($_POST['first_name'] ?? null) ? trim($_POST['first_name']) : '';
 $lastName = is_string($_POST['last_name'] ?? null) ? trim($_POST['last_name']) : '';
-if ($license === '' || $lastName === '' || strlen($license) > 30 || mb_strlen($lastName, 'UTF-8') > 50 ||
-    !preg_match('//u', $lastName)) {
-    respond(422, ['ok' => false, 'error' => 'Podaj numer licencji i nazwisko.']);
+if (strlen($license) > 30 || mb_strlen($firstName, 'UTF-8') > 50 || mb_strlen($lastName, 'UTF-8') > 50 ||
+    !preg_match('//u', $firstName) || !preg_match('//u', $lastName) ||
+    ($license === '' && ($firstName === '' || $lastName === ''))) {
+    respond(422, ['ok' => false, 'error' => 'Podaj numer licencji albo imię i nazwisko.']);
 }
 
 try {
@@ -44,7 +46,7 @@ try {
     if (!StartLookup::registerAttempt($pdo, (string) ($_SERVER['REMOTE_ADDR'] ?? 'unknown'))) {
         respond(429, ['ok' => false, 'error' => 'Zbyt wiele prób wyszukiwania. Spróbuj ponownie za kilka minut.']);
     }
-    respond(200, ['ok' => true, 'starts' => StartLookup::find($pdo, $license, $lastName)]);
+    respond(200, ['ok' => true, 'starts' => StartLookup::find($pdo, $license, $firstName, $lastName)]);
 } catch (PDOException | RuntimeException $exception) {
     error_log('Wyszukiwanie startów: ' . $exception->getMessage());
     respond(503, ['ok' => false, 'error' => 'Wyszukiwanie startów jest chwilowo niedostępne. Wpisz starty ręcznie.']);

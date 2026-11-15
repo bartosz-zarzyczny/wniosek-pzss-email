@@ -2,3 +2,5 @@ settings.json
 /database/data.sql
 local.php
 /download_pdf
+__pycache__/
+*.py[cod]

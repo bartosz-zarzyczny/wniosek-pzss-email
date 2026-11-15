@@ -13,6 +13,7 @@
     const progress = root.querySelector('[data-progress]');
     const bar = root.querySelector('[data-progress-bar]');
     const yearInput = root.querySelector('[data-year]');
+    const calendarInput = root.querySelector('[data-calendar-url]');
     const forceInput = root.querySelector('[data-force]');
     const manualForm = document.querySelector('[data-manual-import]');
     const manualButton = document.querySelector('[data-manual-submit]');
@@ -87,13 +88,20 @@
     });
 
     runButton.addEventListener('click', async () => {
+        if (!calendarInput || calendarInput.value === '') {
+            statusBox.textContent = 'Dodaj adres kalendarza w zakładce ustawień.';
+            return;
+        }
         setBusy(true);
         tbody.replaceChildren();
         table.hidden = true;
         progress.hidden = true;
         statusBox.textContent = 'Skanowanie kalendarza…';
         try {
-            const scan = await api('scan', { year: yearInput.value });
+            const scan = await api('scan', {
+                year: yearInput.value,
+                calendar_url: calendarInput.value,
+            });
             const items = scan.items;
             if (items.length === 0) {
                 statusBox.textContent = 'Nie znaleziono plików z wynikami dla roku ' + scan.year + '.';

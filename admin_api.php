@@ -10,6 +10,7 @@ session_start();
 
 require_once __DIR__ . '/lib/StartLookup.php';
 require_once __DIR__ . '/lib/Schema.php';
+require_once __DIR__ . '/lib/AdminSettings.php';
 require_once __DIR__ . '/lib/MzssImporter.php';
 
 header('Content-Type: application/json; charset=UTF-8');
@@ -46,22 +47,26 @@ try {
         respond(401, ['ok' => false, 'error' => 'Zaloguj się ponownie.']);
     }
 
-    $settings = json_decode((string) file_get_contents(__DIR__ . '/settings.json'), true);
-    if (!is_array($settings)) {
-        throw new RuntimeException('Nieprawidłowy settings.json.');
-    }
-    $importer = new MzssImporter($pdo, $settings, __DIR__ . '/download_pdf');
+    $settings = AdminSettings::load(__DIR__ . '/settings.json');
+    $calendarUrls = AdminSettings::calendarUrls($settings);
 
     if ($action === 'python') {
+        $importer = new MzssImporter($pdo, $settings, __DIR__ . '/download_pdf');
         respond(200, ['ok' => true] + $importer->checkPython());
     }
 
     if ($action === 'scan') {
+        $calendarUrl = is_string($_POST['calendar_url'] ?? null) ? trim($_POST['calendar_url']) : '';
+        if (!in_array($calendarUrl, $calendarUrls, true) ||
+            !AdminSettings::isValidCalendarUrl($calendarUrl)) {
+            respond(422, ['ok' => false, 'error' => 'Wybierz prawidłowy adres kalendarza.']);
+        }
         $year = (int) ($_POST['year'] ?? 0);
+        $importer = new MzssImporter($pdo, $settings, __DIR__ . '/download_pdf', $calendarUrl);
         $scan = $importer->scan($year >= 2000 && $year <= 2100 ? $year : null);
         $_SESSION['mzss_items'] = [];
         foreach ($scan['items'] as $item) {
-            $_SESSION['mzss_items'][$item['url']] = $item;
+            $_SESSION['mzss_items'][$item['url']] = $item + ['calendar_url' => $calendarUrl];
         }
         respond(200, ['ok' => true, 'year' => $scan['year'], 'items' => $scan['items']]);
     }
@@ -72,6 +77,12 @@ try {
         if (!is_array($item)) {
             respond(422, ['ok' => false, 'error' => 'Nieznany plik. Wykonaj skanowanie ponownie.']);
         }
+        $calendarUrl = is_string($item['calendar_url'] ?? null) ? $item['calendar_url'] : '';
+        if (!in_array($calendarUrl, $calendarUrls, true) ||
+            !AdminSettings::isValidCalendarUrl($calendarUrl)) {
+            respond(422, ['ok' => false, 'error' => 'Lista kalendarzy się zmieniła. Wykonaj skanowanie ponownie.']);
+        }
+        $importer = new MzssImporter($pdo, $settings, __DIR__ . '/download_pdf', $calendarUrl);
         session_write_close();
         try {
             $result = $importer->process($item, ($_POST['force'] ?? '') === '1');
@@ -167,6 +178,7 @@ try {
         }
 
         session_write_close();
+        $importer = new MzssImporter($pdo, $settings, __DIR__ . '/download_pdf');
         $result = $importer->importManual($tmpFile, $fileName, [
             'title' => $title,
             'date' => $date,

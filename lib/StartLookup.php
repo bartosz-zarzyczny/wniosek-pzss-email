@@ -61,34 +61,46 @@ final class StartLookup
     }
 
     /** @return list<array{name:string,date:string,location:string,category:string,calendar:string,remarks:string,url:string}> */
-    public static function find(PDO $pdo, string $license, string $lastName): array
+    public static function find(PDO $pdo, string $license, string $firstName, string $lastName): array
     {
-        if (!preg_match('/\d{3,6}/', $license, $match)) {
-            return [];
+        $sql = 'SELECT c.name, c.event_date, c.location, c.calendar, c.event_url, r.discipline, r.name_key, r.competition_name
+                FROM competition_results r
+                JOIN competitions c ON c.id = r.competition_id
+                WHERE ';
+        if ($license !== '') {
+            if (!preg_match('/\d{3,6}/', $license, $match)) {
+                return [];
+            }
+            $parameters = ['license' => $match[0]];
+            $normalizedFirstName = self::normalizeName($firstName);
+            $normalizedLastName = self::normalizeName($lastName);
+            $sql .= '(r.license_number = :license';
+            if ($normalizedFirstName !== '' && $normalizedLastName !== '') {
+                $sql .= ' OR (r.license_number IS NULL AND r.name_key IN (:full_name, :reversed_name))';
+                $parameters['full_name'] = $normalizedFirstName . ' ' . $normalizedLastName;
+                $parameters['reversed_name'] = $normalizedLastName . ' ' . $normalizedFirstName;
+            }
+            $sql .= ')';
+        } else {
+            $normalizedFirstName = self::normalizeName($firstName);
+            $normalizedLastName = self::normalizeName($lastName);
+            if ($normalizedFirstName === '' || $normalizedLastName === '') {
+                return [];
+            }
+            $sql .= 'r.name_key IN (:full_name, :reversed_name)';
+            $parameters = [
+                'full_name' => $normalizedFirstName . ' ' . $normalizedLastName,
+                'reversed_name' => $normalizedLastName . ' ' . $normalizedFirstName,
+            ];
         }
-        $tokens = array_filter(explode(' ', self::normalizeName($lastName)), 'strlen');
-        if ($tokens === []) {
-            return [];
-        }
-
         $statement = $pdo->prepare(
-            'SELECT c.name, c.event_date, c.location, c.calendar, c.event_url, r.discipline, r.name_key, r.competition_name
-             FROM competition_results r
-             JOIN competitions c ON c.id = r.competition_id
-             WHERE r.license_number = :license
-             ORDER BY c.event_date, c.name, c.location, r.discipline, r.competition_name'
+            $sql . ' ORDER BY c.event_date, c.name, c.location, r.discipline, r.competition_name'
         );
-        $statement->execute(['license' => $match[0]]);
+        $statement->execute($parameters);
 
         $starts = [];
         $seen = [];
         foreach ($statement->fetchAll() as $row) {
-            $nameTokens = array_filter(explode(' ', trim((string) $row['name_key'])), 'strlen');
-            if ($nameTokens === [] ||
-                (array_diff($tokens, $nameTokens) !== [] && count($nameTokens) > 1)) {
-                continue;
-            }
-            // Some result PDFs omit the surname; the exact license number was already matched in SQL.
             // Scal duplikaty importu, ale nie odrębne konkurencje tej samej dyscypliny.
             $key = $row['event_date'] . '|' . $row['name'] . '|' . $row['location'] . '|' .
                 $row['discipline'] . '|' . $row['competition_name'];

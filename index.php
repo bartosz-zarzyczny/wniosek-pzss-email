@@ -11,6 +11,7 @@ session_start();
 cleanupTemporaryPdfs();
 
 require_once __DIR__ . '/lib/PdfFiller.php';
+require_once __DIR__ . '/lib/AdminSettings.php';
 
 function h(string $value): string
 {
@@ -49,6 +50,9 @@ function readSettings(): array
     $contents = file_get_contents($path);
     if ($contents === false) {
         throw new RuntimeException('Nie można odczytać settings.json.');
+    }
+    if (strncmp($contents, "\xEF\xBB\xBF", 3) === 0) {
+        $contents = substr($contents, 3);
     }
     $settings = json_decode($contents, true);
     if (!is_array($settings) || json_last_error() !== JSON_ERROR_NONE) {
@@ -239,6 +243,7 @@ if ($licenseYear === false || $licenseYear < 2020 || $licenseYear > 2099) {
     $settingsError = 'Pole license_year w settings.json musi zawierać rok z zakresu 2020–2099.';
     $licenseYear = 2027;
 }
+$headerTexts = AdminSettings::headerTexts($settings);
 
 $form = [
     'first_name' => '',
@@ -588,11 +593,11 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
 <body>
 <header class="site-header">
     <div class="header-inner">
-        <a class="brand" href="index.php" aria-label="Formularz wniosku licencyjnego">
-            <span class="brand-mark" aria-hidden="true">Z</span>
-            <span class="brand-copy"><strong>ZSD</strong><span>STREFA ZAWODNIKA</span></span>
+        <a class="brand" href="index.php" aria-label="<?= h($headerTexts['brand_aria_label']) ?>">
+            <span class="brand-mark" aria-hidden="true"><?= h($headerTexts['brand_mark']) ?></span>
+            <span class="brand-copy"><strong><?= h($headerTexts['brand_title']) ?></strong><span><?= h($headerTexts['brand_subtitle']) ?></span></span>
         </a>
-        <span class="header-label">LICENCJA ZAWODNICZA · <?= h((string) $licenseYear) ?></span>
+        <span class="header-label"><?= h($headerTexts['header_label']) ?> · <?= h((string) $licenseYear) ?></span>
     </div>
 </header>
 
@@ -662,7 +667,7 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
                 </div>
                 <div class="lookup-box">
                     <button class="button button-secondary" type="button" data-lookup-button>Wyszukaj moje starty</button>
-                    <p class="privacy-note" data-lookup-status role="status" aria-live="polite">Wpisz nazwisko i numer licencji, a uzupełnimy dyscypliny i starty znalezione w wynikach zawodów.</p>
+                    <p class="privacy-note" data-lookup-status role="status" aria-live="polite">Numer licencji ma pierwszeństwo. Jeśli go nie podasz, wyszukamy starty po imieniu i nazwisku.</p>
                 </div>
             </section>
 

@@ -675,9 +675,49 @@ h1 em {
 .admin-shell { display: grid; gap: 1.5rem; }
 .admin-card { background: #fff; border: 1px solid #e3dfd9; border-radius: 12px; padding: 1.5rem; }
 .admin-card h1, .admin-card h2, .admin-card h3 { margin-top: 0; }
+.admin-tabs { display: flex; flex-wrap: wrap; gap: .5rem; border-bottom: 1px solid #d9d4cd; }
+.admin-tabs a {
+    display: inline-flex;
+    padding: .7rem 1rem;
+    color: var(--ink);
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 8px 8px 0 0;
+}
+.admin-tabs a[aria-current="page"] {
+    background: #fff;
+    border-color: #e3dfd9;
+    border-bottom-color: #fff;
+    margin-bottom: -1px;
+    font-weight: 700;
+}
+.admin-tabs a:focus-visible { outline: 3px solid rgba(29, 49, 76, .25); outline-offset: 2px; }
 .admin-form { display: grid; gap: 1rem; max-width: 26rem; }
 .admin-manual-form { max-width: none; }
-.admin-form .field select {
+.admin-manual-form .category-options { display: block; }
+.admin-manual-form .category-options legend { float: none; margin: 0 0 .5rem; }
+.admin-manual-form .category-options .privacy-note { margin: 0 0 .5rem; }
+.admin-manual-form .category-options .check-option {
+    display: flex;
+    width: max-content;
+    margin-top: .5rem;
+}
+.admin-settings-form { max-width: none; }
+.admin-settings-form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccd3dc;
+    border-radius: 5px;
+    color: var(--ink);
+    font: inherit;
+    resize: vertical;
+}
+.admin-settings-form textarea:focus {
+    border-color: var(--navy-soft);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(29, 49, 76, .11);
+}
+.admin-form .field select, .admin-calendar select {
     width: 100%;
     min-height: 45px;
     padding: 10px 12px;
@@ -687,12 +727,14 @@ h1 em {
     color: var(--ink);
     font: inherit;
 }
-.admin-form .field select:focus {
+.admin-form .field select:focus, .admin-calendar select:focus {
     border-color: var(--navy-soft);
     outline: none;
     box-shadow: 0 0 0 3px rgba(29, 49, 76, .11);
 }
 .admin-toolbar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin: 1rem 0; }
+.admin-calendar { flex: 1 1 22rem; min-width: min(100%, 22rem); }
+.admin-calendar select { max-width: 100%; }
 .admin-year input { width: 6rem; }
 .admin-check { display: flex; gap: .4rem; align-items: center; font-size: .9rem; }
 .admin-logout { display: flex; gap: 1rem; align-items: center; margin: 0; }

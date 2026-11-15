@@ -13,14 +13,23 @@ final class MzssImporter
     private string $host;
 
     /** @param array<string,mixed> $settings */
-    public function __construct(private PDO $pdo, array $settings, string $downloadDir)
+    public function __construct(
+        private PDO $pdo,
+        array $settings,
+        string $downloadDir,
+        ?string $calendarUrl = null
+    )
     {
-        $this->calendarUrl = (string) ($settings['calendar_url'] ?? '');
+        $this->calendarUrl = trim($calendarUrl ?? '');
         $this->pythonPath = (string) ($settings['python_path'] ?? 'python3');
         $this->downloadDir = rtrim($downloadDir, '/\\');
+        if ($this->calendarUrl === '') {
+            $this->host = '';
+            return;
+        }
         $parts = parse_url($this->calendarUrl);
-        if (!is_array($parts) || !in_array($parts['scheme'] ?? '', ['http', 'https'], true) || empty($parts['host'])) {
-            throw new RuntimeException('Brak poprawnego "calendar_url" w settings.json.');
+        if (!AdminSettings::isValidCalendarUrl($this->calendarUrl) || !is_array($parts)) {
+            throw new RuntimeException('Nieprawidłowy adres kalendarza.');
         }
         $this->host = strtolower((string) $parts['host']);
     }
@@ -33,6 +42,9 @@ final class MzssImporter
     /** @return array{year:int,items:list<array<string,mixed>>} */
     public function scan(?int $year = null): array
     {
+        if ($this->calendarUrl === '') {
+            throw new RuntimeException('Wybierz adres kalendarza do skanowania.');
+        }
         [$html] = $this->fetchPage($this->calendarUrl);
         $doc = $this->loadHtml($html);
         $currentYear = $this->pageYear($doc);
@@ -127,7 +139,8 @@ final class MzssImporter
 
         $sha = hash_file('sha256', $file) ?: null;
         $changed = $downloaded && ($record === null || $record['sha256'] !== $sha);
-        $needsImport = $force || $changed || $record === null || $record['imported_at'] === null;
+        $needsImport = $force || $changed || $record === null ||
+            $record['imported_at'] === null || ($record['status'] ?? '') === 'error';
 
         $this->saveRecord($url, basename($file), $remote, $sha, $downloaded, $record);
 
@@ -330,7 +343,7 @@ final class MzssImporter
             if (!$manual) {
                 $this->removeCompetition($url);
             }
-            return ['status' => 'empty', 'message' => 'Brak numerów licencji w pliku — pominięto.'];
+            return ['status' => 'empty', 'message' => 'Nie znaleziono rozpoznawalnych zawodników w pliku — pominięto.'];
         }
 
         $flags = array_values(array_intersect(['pistol', 'rifle', 'shotgun'], (array) ($item['flags'] ?? [])));
@@ -365,7 +378,12 @@ final class MzssImporter
                 $unknown++;
                 continue;
             }
-            $starts[] = [$discipline, (string) $license, (string) $nameKey, $competitionName];
+            $starts[] = [
+                $discipline,
+                (string) $license !== '' ? (string) $license : null,
+                (string) $nameKey,
+                $competitionName,
+            ];
         }
         if ($starts === []) {
             if (!$manual) {
@@ -419,6 +437,12 @@ final class MzssImporter
             $namedStarts,
             count($starts)
         );
+        $withoutLicense = count(array_filter($starts, static function (array $start): bool {
+            return $start[1] === null;
+        }));
+        if ($withoutLicense > 0) {
+            $message .= sprintf(' Bez numeru licencji: %d.', $withoutLicense);
+        }
         if ($unknown > 0) {
             $message .= sprintf(' Pominięto %d bez rozpoznanej dyscypliny.', $unknown);
         }

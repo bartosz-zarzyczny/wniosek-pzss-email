@@ -37,6 +37,14 @@ final class Schema
             $pdo->exec("ALTER TABLE competition_results ADD COLUMN competition_name VARCHAR(120) NOT NULL DEFAULT '' AFTER name_key");
         }
 
+        $licenseNullable = $pdo->query(
+            "SELECT IS_NULLABLE FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competition_results' AND COLUMN_NAME = 'license_number'"
+        )->fetchColumn();
+        if ($licenseNullable === 'NO') {
+            $pdo->exec('ALTER TABLE competition_results MODIFY license_number VARCHAR(10) NULL');
+        }
+
         $startIndexColumns = $pdo->query(
             "SELECT GROUP_CONCAT(COLUMN_NAME ORDER BY SEQ_IN_INDEX SEPARATOR ',')
              FROM information_schema.STATISTICS

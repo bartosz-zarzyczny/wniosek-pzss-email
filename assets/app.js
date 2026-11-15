@@ -297,15 +297,17 @@
 
     if (lookupButton && lookupStatus) {
         lookupButton.addEventListener('click', async () => {
+            const firstName = field('applicant[first_name]').value.trim();
             const lastName = field('applicant[last_name]').value.trim();
             const license = field('applicant[license]').value.trim();
-            if (lastName === '' || license === '') {
-                lookupStatus.textContent = 'Podaj nazwisko i numer licencji, aby wyszukać starty.';
+            if (license === '' && (firstName === '' || lastName === '')) {
+                lookupStatus.textContent = 'Podaj imię i nazwisko albo numer licencji, aby wyszukać starty.';
                 return;
             }
 
             const body = new FormData();
             body.set('csrf_token', field('csrf_token').value);
+            body.set('first_name', firstName);
             body.set('last_name', lastName);
             body.set('license', license);
             lookupButton.disabled = true;

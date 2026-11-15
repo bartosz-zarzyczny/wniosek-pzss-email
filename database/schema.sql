@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS competition_results (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     competition_id INT UNSIGNED NOT NULL,
     discipline ENUM('pistol', 'rifle', 'shotgun') NOT NULL,
-    license_number VARCHAR(10) NOT NULL,
+    license_number VARCHAR(10) NULL,
     name_key VARCHAR(160) NOT NULL,
     competition_name VARCHAR(120) NOT NULL DEFAULT '',
     PRIMARY KEY (id),

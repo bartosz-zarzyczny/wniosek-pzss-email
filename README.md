@@ -11,13 +11,20 @@ Lekka strona PHP do wypełnienia załączonego wniosku na rok 2027, wygenerowani
    ```json
    {
      "license_year": 2027,
+     "brand_aria_label": "Formularz wniosku licencyjnego",
+     "brand_mark": "Z",
+     "brand_title": "ZSD",
+     "brand_subtitle": "STREFA ZAWODNIKA",
+     "header_label": "LICENCJA ZAWODNICZA",
      "recipients": ["sekretariat@example.pl"],
      "from_email": "formularz@example.pl",
-     "rate_limit_seconds": 30
+     "rate_limit_seconds": 30,
+     "calendar_urls": ["https://mzss.pl/index.php?page=kalendarz"],
+     "python_path": "python3"
    }
    ```
 
-   `recipients` może zawierać jeden lub kilka adresów; wiadomość jest wysyłana osobno do każdego z nich. Plik `settings.json` jest w `.gitignore` i nie jest częścią repozytorium — utwórz go ręcznie na każdym środowisku, kopiując wzór z `settings.json-example` (zawiera adresy przykładowe `klub@example.com` i `prezes@example.com`, które zastąp właściwymi). Ustaw `from_email` na adres w domenie obsługiwanej przez hosting i skonfiguruj dla niej SPF/DKIM zgodnie z panelem hostingu. Jeśli `from_email` pozostanie pusty, aplikacja spróbuje użyć `formularz@` plus domena bieżącej strony. `calendar_url` (strona kalendarza MZSS) i `python_path` (polecenie Pythona ≥ 3.10) są używane tylko przez panel administracyjny.
+   `license_year` musi być z zakresu 2020–2099. Teksty `brand_aria_label`, `brand_mark`, `brand_title`, `brand_subtitle` i `header_label` konfigurują treści nagłówka formularza. `recipients` może zawierać jeden lub kilka adresów; wiadomość jest wysyłana osobno do każdego z nich. Plik `settings.json` jest w `.gitignore` i nie jest częścią repozytorium — utwórz go ręcznie na każdym środowisku, kopiując wzór z `settings.json-example` (zawiera adresy przykładowe `klub@example.com` i `prezes@example.com`, które zastąp właściwymi). Ustaw `from_email` na adres w domenie obsługiwanej przez hosting i skonfiguruj dla niej SPF/DKIM zgodnie z panelem hostingu. Jeśli `from_email` pozostanie pusty, aplikacja spróbuje użyć `formularz@` plus domena bieżącej strony. `calendar_urls` zawiera listę stron kalendarzy importowanych przez panel, a `python_path` (polecenie Pythona ≥ 3.10) jest używane tylko przez panel administracyjny.
 4. Upewnij się, że PHP może korzystać z `mail()` oraz zapisywać pliki w systemowym katalogu tymczasowym. Hosting musi mieć skonfigurowaną pocztę wychodzącą; samo poprawne działanie PHP nie gwarantuje dostarczenia wiadomości.
 5. Opcjonalnie, dla wyszukiwania startów: utwórz bazę MySQL, skopiuj `local.example.php` jako `local.php`, uzupełnij dane dostępowe i otwórz `admin.php` (patrz „Baza wyników i panel administracyjny”).
 6. Otwórz stronę przez HTTPS i wykonaj test, kontrolując skrzynkę odbiorczą oraz folder spam. Nie wysyłaj danych testowych do rzeczywistych adresów bez zgody ich właścicieli.
@@ -67,18 +74,18 @@ Pytania znajdują się w tablicy `$captchaQuestions` w `index.php`. Nowe pytanie
 
 ## Baza wyników i panel administracyjny
 
-Przycisk „Wyszukaj moje starty” w sekcji 01 formularza (`lookup.php`) szuka w bazie MySQL startów zawodnika po **numerze licencji i nazwisku** (bez względu na wielkość liter i polskie znaki), zaznacza dyscypliny i wypełnia puste wiersze startów. Wyszukiwanie jest ograniczone do 10 prób na 10 minut dla adresu IP (w bazie zapisywany jest tylko skrót SHA-256 adresu). Dane dostępowe do bazy są w `local.php` (poza repozytorium; wzór: `local.example.php`).
+Przycisk „Wyszukaj moje starty” w sekcji 01 formularza (`lookup.php`) wyszukuje starty w bazie MySQL. Podany **numer licencji ma pierwszeństwo**: wyniki z tym numerem są wyszukiwane po licencji, a rekordy, w których import nie zawierał numeru licencji, dodatkowo po imieniu i nazwisku. Gdy numer licencji nie został podany, wyszukiwanie odbywa się po imieniu i nazwisku. Dopasowanie nazw ignoruje wielkość liter i polskie znaki. Wyniki zaznaczają dyscypliny i wypełniają puste wiersze startów. Wyszukiwanie jest ograniczone do 10 prób na 10 minut dla adresu IP (w bazie zapisywany jest tylko skrót SHA-256 adresu). Dane dostępowe do bazy są w `local.php` (poza repozytorium; wzór: `local.example.php`).
 
 Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące tabele i kolumny przy pierwszym wejściu, więc na hostingu nie trzeba ręcznie importować schematu.
 
 ### Panel administracyjny (`admin.php`)
 
 - **Pierwsze wejście:** gdy w bazie nie ma żadnego użytkownika, panel pokazuje formularz utworzenia pierwszego konta (login + hasło min. 10 znaków). Zrób to od razu po wdrożeniu — kto pierwszy otworzy `admin.php`, zakłada konto.
-- **Użytkownicy:** po zalogowaniu można dodawać kolejnych użytkowników i usuwać innych (nie własne konto). Hasła są zapisywane jako skrót `password_hash`. Logowanie ma limit 5 nieudanych prób na 15 minut dla adresu IP, token CSRF i regenerację sesji.
-- **Pobieranie i import:** przycisk „Pobierz i zaimportuj” wczytuje kalendarz MZSS z `calendar_url` dla wybranego roku, wybiera pliki z wynikami (nazwa zawiera `_R_`/`R` jako osobny człon, „rezultat”, „result” lub „wyniki”, bez względu na wielkość liter; komunikaty `_K_` są pomijane) i zapisuje je w `download_pdf/`. Plik jest pobierany tylko wtedy, gdy go nie ma lub na serwerze jest nowsza wersja (porównanie `ETag` / `Last-Modified` / rozmiaru z zapisem w tabeli `pdf_files`; ręcznie wgrany plik o tym samym rozmiarze i nie starszy niż na serwerze jest uznawany za aktualny). Po pobraniu nowej wersji wyniki zawodów są importowane od nowa. Opcja „przetwórz ponownie” wymusza ponowny import plików lokalnych.
+- **Zakładki i użytkownicy:** zakładka „Import” zawiera importy; w „Ustawienia i użytkownicy” można ustawić rok licencji, edytować treści nagłówka, adresy odbiorców, adres nadawcy i adresy kalendarzy oraz dodawać i usuwać administratorów (nie własne konto). Hasła są zapisywane jako skrót `password_hash`. Logowanie ma limit 5 nieudanych prób na 15 minut dla adresu IP, token CSRF i regenerację sesji.
+- **Pobieranie i import:** na karcie importu wybierz jeden adres z `calendar_urls`; panel skanuje wyłącznie ten kalendarz dla wybranego roku, wybiera pliki z wynikami (nazwa zawiera `_R_`/`R` jako osobny człon, „rezultat”, „result” lub „wyniki”, bez względu na wielkość liter; komunikaty `_K_` są pomijane) i zapisuje je w `download_pdf/`. Plik jest pobierany tylko wtedy, gdy go nie ma lub na serwerze jest nowsza wersja (porównanie `ETag` / `Last-Modified` / rozmiaru z zapisem w tabeli `pdf_files`; ręcznie wgrany plik o tym samym rozmiarze i nie starszy niż na serwerze jest uznawany za aktualny). Po pobraniu nowej wersji wyniki zawodów są importowane od nowa. Błędy importu są ponawiane przy kolejnym skanowaniu; opcja „przetwórz ponownie” wymusza ponowny import także plików bez błędu.
 - **Import ręczny:** wgraj pojedynczy PDF spoza kalendarza MZSS, podaj nazwę, datę, miejsce i kalendarz zawodów, a panel zapisze odczytane wyniki w bazie. Opcjonalnie podaj link do zawodów i zaznacz dyscypliny, jeśli nie da się ich rozpoznać w protokołach. Link jest uzupełniany w formularzu po wyszukaniu startów i trafia do treści e-maila; szablon PDF nie ma osobnego pola URL. Plik jest przetwarzany tymczasowo, bez zapisywania kopii na serwerze; ponowny import tego samego pliku i metadanych zastępuje wcześniejszy ręczny import.
 - **Limity hostingu:** pliki są przetwarzane po jednym na żądanie AJAX (limit 30 s), postęp widać w tabeli. Do odczytu PDF używany jest `tools/parse_pdf.py` z dołączoną biblioteką `pypdf` (`tools/vendor/`, licencja BSD) uruchamiany przez `proc_open`; hosting musi udostępniać Python ≥ 3.10 (przycisk „Sprawdź Pythona” pokazuje wersję i status). Ścieżkę zmienisz w `python_path`.
-- **Dyscyplina:** w imporcie z kalendarza brana jest z treści PDF (np. protokoły Legion Tarnów), a w pozostałych przypadkach z zaznaczeń P/K/S w kalendarzu MZSS, gdy jest jednoznaczna. W imporcie ręcznym można zaznaczyć dyscyplinę domyślną dla protokołów bez rozpoznanej dyscypliny. Nierozpoznane wiersze i pliki bez numerów licencji są pomijane z komunikatem. Kalendarz zaimportowanych ręcznie zawodów jest wybierany w formularzu importu.
+- **Dyscyplina:** w imporcie z kalendarza brana jest z treści PDF (np. protokoły Legion Tarnów), a w pozostałych przypadkach z zaznaczeń P/K/S w kalendarzu MZSS, gdy jest jednoznaczna. Parser rozpoznaje również dynamiczne kategorie w nagłówkach wyników, protokołów i kategorii: `MINI RIFLE` oraz `PC OPTICS` jako karabin, pozostałe obsługiwane kategorie jako pistolet. Zestawienia Senior, które powielają wyniki kategorii podstawowych, są pomijane. W imporcie ręcznym można zaznaczyć kilka dyscyplin domyślnych; kategorie rozpoznane w PDF są przypisywane do dyscyplin osobno. Nierozpoznane wiersze są pomijane z komunikatem; zawodnicy bez numeru licencji mogą być importowani i są wyszukiwani po imieniu i nazwisku. Kalendarz zaimportowanych ręcznie zawodów jest wybierany w formularzu importu.
 - Zawody spoza kalendarza MZSS (np. PZSS) można dodać ręcznie narzędziem `tools/import_results.py`, które generuje `database/data.sql` (usuwa i wstawia tylko rekordy bez `source_key`). Powtarzające się starty (ta sama data i dyscyplina) są w wynikach wyszukiwania scalane.
 ## Struktura projektu
 
@@ -92,6 +99,7 @@ Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące
 | `lib/AdminAuth.php`, `lib/MzssImporter.php`, `lib/Schema.php` | Konta, import PDF z kalendarza lub ręczny, tworzenie tabel |
 | `tools/parse_pdf.py`, `tools/vendor/` | Odczyt zawodników z PDF (Python + pypdf) |
 | `tools/import_results.py`, `database/` | Ręczny import wyników do SQL, schemat bazy |
+| `tests/StartLookupTest.php` | Test wyszukiwania po licencji i dla rekordów bez licencji |
 | `local.php`, `local.example.php` | Dane dostępowe do bazy (`local.php` poza repozytorium) |
 | `download_pdf/` | Pobrane PDF-y z wynikami (poza repozytorium, zablokowane w `.htaccess`) |
 | `assets/` | `app.js`, `style.css`, font Source Sans 3 i licencja OFL |
@@ -106,7 +114,7 @@ Tabele tworzy `database/schema.sql`; panel administracyjny sam dodaje brakujące
 
 ## Test PDF
 
-Uruchom `php tests/PdfFillerTest.php`, aby sprawdzić oznaczenia kalendarzy i łamanie nazw zawodów w generowanym PDF. Test nie wysyła wiadomości.
+Uruchom `php tests/PdfFillerTest.php`, aby sprawdzić oznaczenia kalendarzy i łamanie nazw zawodów w generowanym PDF, `php tests/AdminSettingsTest.php`, aby sprawdzić ustawienia, oraz `php tests/StartLookupTest.php`, aby sprawdzić pierwszeństwo licencji i dopasowanie rekordów bez licencji (test wymaga sterownika PDO SQLite). Testy nie wysyłają wiadomości.
 
 Importer wyników zachowuje nazwę konkurencji z każdego protokołu, nawet gdy ten sam zawodnik startuje kilka razy w tej samej dyscyplinie danego dnia. Nazwa trafia do pola „Uwagi” w formularzu. Wynik importu pokazuje, dla ilu startów udało się odczytać nazwę konkurencji. Po wdrożeniu tej wersji wymuś ponowny import odpowiedniego PDF w panelu administratora, aby odświeżyć już zaimportowane wyniki; panel automatycznie uzupełni brakującą kolumnę bazy.
 
