@@ -245,6 +245,15 @@ h1 em {
     font-weight: 700;
 }
 
+.captcha-field > span {
+    color: #b42318;
+    font-size: 15px;
+}
+
+.captcha-field > span b {
+    color: inherit;
+}
+
 .field > span b,
 .category-options legend b,
 .declaration b {
