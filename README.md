@@ -4,6 +4,8 @@ Lekka strona PHP do wypełnienia załączonego wniosku na rok 2027, wygenerowani
 
 ## Wdrożenie na hostingu
 
+Testowane na prostym hostingu VH.pl (https://vh.pl/hosting-www w wersji S). Jeżeli chcesz to mój reflink https://vh.pl/ref/igskbpjaed
+
 1. Skopiuj pliki projektu do katalogu strony WWW, zachowując strukturę folderów.
 2. W panelu hostingu wybierz obsługiwaną wersję PHP (zalecane PHP 8.1 lub nowsze).
 3. Skopiuj `settings.json-example` jako `settings.json` i ustaw rok, adresy odbiorców i adres nadawcy:
