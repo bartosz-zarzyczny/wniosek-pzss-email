@@ -572,6 +572,36 @@ h1 em {
     color: #d5d1cd;
     font-size: 11px;
     letter-spacing: .04em;
+    gap: 16px;
+}
+
+.footer-inner nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-inner nav a {
+    display: inline-flex;
+    width: 36px;
+    height: 36px;
+    align-items: center;
+    justify-content: center;
+    color: #d5d1cd;
+    border-radius: 50%;
+    transition: color .15s ease, background-color .15s ease;
+}
+
+.footer-inner nav a:hover,
+.footer-inner nav a:focus-visible {
+    color: var(--navy);
+    background: #fff;
+}
+
+.footer-inner nav svg {
+    width: 19px;
+    height: 19px;
+    fill: currentColor;
 }
 
 .honeypot {

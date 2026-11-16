@@ -134,3 +134,11 @@ Pełna wiadomość zawiera również numery patentu i licencji, dyscypliny, daty
 ## Ograniczenia i prywatność
 
 Wysyłka zależy od konfiguracji poczty na hostingu i nie stanowi potwierdzenia dostarczenia do skrzynki odbiorcy. Adres IP jest używany do krótkotrwałego ograniczania liczby wysyłek; formularz nie utrwala pozostałych danych poza tymczasowym plikiem PDF. Oświadczenia i informacja o przetwarzaniu danych w PDF pozostają częścią dokumentu źródłowego.
+
+## Znajdź mnie
+
+[![GitHub](https://img.shields.io/badge/GitHub-181717?logo=github&logoColor=white)](https://github.com/bartosz-zarzyczny)
+[![YouTube](https://img.shields.io/badge/YouTube-FF0000?logo=youtube&logoColor=white)](https://www.youtube.com/@Mr_BartekZ)
+[![Instagram](https://img.shields.io/badge/Instagram-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/mr_bartekz/)
+[![Facebook](https://img.shields.io/badge/Facebook-0866FF?logo=facebook&logoColor=white)](https://www.facebook.com/profile.php?id=61587533125970)
+[![X](https://img.shields.io/badge/X-000000?logo=x&logoColor=white)](https://x.com/Mr_BartekZ)

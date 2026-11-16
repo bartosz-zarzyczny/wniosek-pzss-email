@@ -792,7 +792,27 @@ $captchaQuestion = $captchaQuestions[$captchaIndex][0];
     <?php endif; ?>
 </main>
 <footer class="site-footer">
-    <div class="footer-inner"><span>ZSD · WNIOSEK LICENCYJNY</span><span>Dokument źródłowy: wniosek o przedłużenie licencji zawodniczej</span></div>
+    <div class="footer-inner">
+        <span>ZSD · WNIOSEK LICENCYJNY</span>
+        <span>Dokument źródłowy: wniosek o przedłużenie licencji zawodniczej</span>
+        <nav aria-label="Profile społecznościowe">
+            <a href="https://github.com/bartosz-zarzyczny" aria-label="GitHub" title="GitHub">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5a12 12 0 0 0-3.79 23.39c.6.11.82-.26.82-.58v-2.05c-3.34.73-4.04-1.42-4.04-1.42-.55-1.39-1.33-1.76-1.33-1.76-1.09-.75.08-.74.08-.74 1.2.08 1.83 1.23 1.83 1.23 1.07 1.83 2.8 1.3 3.49.99.11-.78.42-1.3.76-1.6-2.67-.3-5.47-1.34-5.47-5.95 0-1.31.47-2.38 1.23-3.22-.12-.3-.53-1.52.12-3.17 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.29-1.55 3.29-1.23 3.29-1.23.65 1.65.24 2.87.12 3.17.77.84 1.23 1.91 1.23 3.22 0 4.62-2.8 5.64-5.48 5.94.43.37.81 1.1.81 2.22v3.29c0 .32.22.69.83.57A12 12 0 0 0 12 .5Z"/></svg>
+            </a>
+            <a href="https://www.youtube.com/@Mr_BartekZ" aria-label="YouTube" title="YouTube">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/mr_bartekz/" aria-label="Instagram" title="Instagram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5Zm0 2.2A2.8 2.8 0 0 0 4.2 7v10A2.8 2.8 0 0 0 7 19.8h10a2.8 2.8 0 0 0 2.8-2.8V7A2.8 2.8 0 0 0 17 4.2H7Zm5 3.1a4.7 4.7 0 1 1 0 9.4 4.7 4.7 0 0 1 0-9.4Zm0 2.2a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Zm5-3.6a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z"/></svg>
+            </a>
+            <a href="https://www.facebook.com/profile.php?id=61587533125970" aria-label="Facebook" title="Facebook">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 21v-8.2h2.8l.4-3.2h-3.2v-2c0-.9.3-1.5 1.6-1.5h1.7V3.2c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.2H7.3v3.2h2.8V21h3.4Z"/></svg>
+            </a>
+            <a href="https://x.com/Mr_BartekZ" aria-label="X" title="X">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 2H22l-6.8 7.8L23.2 22h-6.3L12 14.6 5.5 22H2.3l7.3-8.4L1.8 2h6.5l4.5 6.8L18.9 2Zm-1.1 18h1.7L7.3 3.9H5.5L17.8 20Z"/></svg>
+            </a>
+        </nav>
+    </div>
 </footer>
 <script src="assets/app.js?v=<?= (int) filemtime(__DIR__ . '/assets/app.js') ?>" defer></script>
 </body>
