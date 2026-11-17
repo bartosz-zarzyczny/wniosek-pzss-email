@@ -57,7 +57,7 @@ Captcha obowiązuje tylko przy akcji „Przygotuj i wyślij wniosek”. Pytanie 
 | Lubi dalszy dystans | `karabin` |
 | Dużo małych kulek | `strzelba` |
 | Ile nabojów mieści się w pełnym magazynku 5-strzałowego rewolweru? | `5` |
-| Strzał obok celu to… | `pudlo` |
+| Strzał obok celu to… | `miss` |
 | Chronią uszy na strzelnicy | `suchawki` |
 | Chronią oczy na strzelnicy | `okulary` |
 | Papierowy cel, do którego się strzela | `tarcza` |
